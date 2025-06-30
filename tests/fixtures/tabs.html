@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tabs Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="nav" content="/tests/fixtures/nav.plain.html">
+  <meta name="footer" content="/tests/fixtures/footer.plain.html">
+  <script src="/scripts/aem.js" type="module"></script>
+  <link rel="stylesheet" href="/styles/styles.css">
+</head>
+<body>
+  <header></header>
+  <main>
+    <div class="section">
+      <h1>Accessible Tabs Component Test</h1>
+
+      <!-- This is the content structure AEM authors would create -->
+      <div class="tabs">
+        <div>
+          <div><a href="#features">Product Features</a></div>
+          <div><a href="#reviews">Reviews</a></div>
+        </div>
+        <div>
+          <div id="features">
+            <h2>Product Features</h2>
+            <ul>
+              <li>Feature A: Does amazing things.</li>
+              <li>Feature B: Works in all conditions.</li>
+              <li>Feature C: Easy to use.</li>
+            </ul>
+          </div>
+          <div id="reviews">
+            <h2>Customer Reviews</h2>
+            <ul>
+              <li>Reviewer 1: "This product is fantastic!"</li>
+              <li>Reviewer 2: "Changed my workflow for the better."</li>
+              <li>Reviewer 3: "Highly recommended."</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div id="contact">
+        <a href="./contact.plain.html">/contact.plain.html</a>
+      </div>
+
+    </div>
+  </main>
+  <footer></footer>
+</body>
+</html>

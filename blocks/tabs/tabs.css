@@ -1,0 +1,58 @@
+.tabs {
+  --tab-border-color: #888;
+  --tab-border-color-active: #005A9C;
+  --tab-border-width: 2px;
+  --tab-border-radius: 0;
+  --tab-background-hover: #f0f0f0;
+  --tab-text-color: #333;
+  --tab-text-weight: 500;
+  --tab-text-weight-active: 700;
+  --tab-focus-text-color: #fff;
+  --tab-focus-outline-color: #005A9C;
+  --tab-spacing-m: 10px;
+  --tab-spacing-l: 20px;
+}
+
+/* Basic styles for the tabs block */
+.tabs-list {
+  display: flex;
+  border-bottom: var(--tab-border-width) solid var(--tab-border-color);
+  margin-bottom: var(--tab-spacing-m);
+}
+
+[role="tab"] {
+  padding: var(--tab-spacing-m) var(--tab-spacing-l);
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-bottom: var(--tab-border-width) solid var(--tab-border-color);
+  border-radius: var(--tab-border-radius);
+  font-size: 1em;
+  font-weight: var(--tab-text-weight);
+  color: var(--tab-text-color);
+  margin-bottom: calc(var(--tab-border-width) * -1);
+}
+
+[role="tab"]:hover {
+  background-color: var(--tab-background-hover);
+}
+
+[role="tab"][aria-selected="true"] {
+  border-bottom-color: var(--tab-border-color-active);
+  border-bottom-width: calc(2 * var(--tab-border-width));
+  font-weight: var(--tab-text-weight-active);
+}
+
+[role="tab"]:focus-visible {
+  color: var(--tab-focus-text-color);
+  outline: var(--tab-border-width) solid var(--tab-focus-outline-color);
+  outline-offset: var(--tab-border-width);
+}
+
+.tabs-panels {
+  padding: var(--tab-spacing-m);
+}
+
+[role="tabpanel"] {
+  border-top: none;
+}
