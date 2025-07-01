@@ -128,13 +128,13 @@ describe('Tabs Block', () => {
             <div>
               <div>
                 <ul>
-                  <li><a href="#panel1">Static</a></li>
-                  <li><a href="#panel2">Async</a></li>
+                  <li>Static</li>
+                  <li>Async</li>
                 </ul>
               </div>
             </div>
-            <div><div><h3 id="panel1">Static Content</h3></div></div>
-            <div><div><a id="panel2" href="/tests/fixtures/contact.plain.html"></a></div></div>
+            <div><div><h3>Static Content</h3></div></div>
+            <div><div><a href="/tests/fixtures/contact.plain.html">/tests/fixtures/contact.plain.html</a></div></div>
           </div>
         </div>
       `);
@@ -161,7 +161,7 @@ describe('Tabs Block', () => {
 
     it('should load content asynchronously', async () => {
       const secondTab = block.querySelectorAll('[role="tab"]')[1];
-      const panel = document.getElementById('panel2-container');
+      const panel = document.getElementById(secondTab.getAttribute('aria-controls'));
       expect(panel.getAttribute('aria-busy')).to.equal('false');
       expect(panel.getAttribute('aria-live')).to.equal('polite');
       secondTab.click();
@@ -181,14 +181,14 @@ describe('Tabs Block', () => {
           <button id="before">Before</button>
           <div class="tabs">
             <div>
-              <ul>
-                <li><a href="#panel1">Tab 1</a></li>
-                <li><a href="#panel2">Tab 2</a></li>
-              </ul>
+              <div>
+                <p>Tab 1</p>
+                <p>Tab 2</p>
+              </div>
             </div>
+            <div><div>Panel 1</div></div>
+            <div><div>Panel 2</div></div>
           </div>
-          <div><div id="panel1">Panel 1</div></div>
-          <div><div id="panel2">Panel 2</div></div>
           <button id="after">After</button>
         </div>
       `);
