@@ -11,7 +11,7 @@
  */
 
 import { chromium } from 'playwright';
-import { getAxeResults } from 'axe-playwright';
+import { AxeBuilder } from 'axe-playwright';
 import fs from 'fs';
 
 /**
@@ -40,7 +40,7 @@ async function runAxe(url, outputFile) {
     const page = await browser.newPage();
     try {
         await page.goto(url, { waitUntil: 'networkidle' });
-        const results = await getAxeResults(page);
+        const results = await new AxeBuilder({ page }).analyze();
         fs.writeFileSync(outputFile, JSON.stringify([results], null, 2)); // Wrap in array for consistency
         console.log(`Axe report saved to ${outputFile}`);
         if (results.violations.length > 0) {
@@ -49,7 +49,7 @@ async function runAxe(url, outputFile) {
     } catch (error) {
         console.error(`Error auditing ${url}:`, error);
         // Still write an empty report to not break the chain
-        fs.writeFileSync(outputFile, JSON.stringify([]), null, 2);
+        fs.writeFileSync(outputFile, JSON.stringify([{ violations: [] }]), null, 2);
     } finally {
         await browser.close();
     }
