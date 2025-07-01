@@ -1,4 +1,4 @@
-// import { handleKeyboardNavigation } from '../../scripts/a11y-core.js';
+import { getRandomId } from '../../scripts/a11y-core.js';
 
 const originalPanelLinks = {};
 
@@ -74,12 +74,22 @@ export default function decorate(block, parentElement = block.parentElement) {
   tablist.setAttribute('role', 'tablist');
   tablist.classList.add('tabs-list');
 
-  const tabLinks = [...tablistContainer.querySelectorAll('a')];
+  let tabLinks = [...tablistContainer.querySelectorAll('a')];
+  if (!tabLinks.length) {
+    // eslint-disable-next-line no-console
+    console.warn('No tab anchor links found, falling back to list item elements, but this is not recommended.');
+    tabLinks = [...tablistContainer.querySelectorAll('li')];
+  }
+  if (!tabLinks.length) {
+    // eslint-disable-next-line no-console
+    console.warn('No tab anchor links found, falling back to paragraph elements, but this is not recommended.');
+    tabLinks = [...tablistContainer.querySelectorAll('p')];
+  }
 
   tabLinks.forEach((link, i) => {
-    const tabId = `tab-${i}`;
-    const panelId = link.getAttribute('href').substring(1);
-    const panel = parentElement.querySelector(`#${panelId}`);
+    const tabId = getRandomId('tab');
+    const panelId = link.href ? `${new URL(link.href).hash.substring(1)}-container` : getRandomId('tabpanel');
+    const panel = parentElement.querySelector(`#${panelId}`)?.closest('div') || block.children.item(i + 1);
 
     if (panel) {
       const tab = document.createElement('button');
@@ -90,6 +100,7 @@ export default function decorate(block, parentElement = block.parentElement) {
       tablist.append(tab);
 
       panel.setAttribute('role', 'tabpanel');
+      panel.setAttribute('id', panelId);
       panel.setAttribute('aria-labelledby', tabId);
       panel.setAttribute('hidden', '');
 

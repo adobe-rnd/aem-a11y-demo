@@ -23,3 +23,11 @@ export function handleKeyboardNavigation(e, activateItem) {
     activateItem(items[items.length - 1]);
   }
 }
+
+/**
+ * Generates a random ID.
+ * @returns {string} A random ID.
+ */
+export function getRandomId(scope = 'a11y') {
+  return `${scope}-${Math.random().toString(36).substring(2, 15)}`;
+}
