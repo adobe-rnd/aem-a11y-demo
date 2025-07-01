@@ -1,4 +1,5 @@
-name: Build
+name: AEM A11y Demo CI
+
 on: [push]
 
 jobs:
@@ -6,9 +7,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+
     - name: Use Node.js 20
       uses: actions/setup-node@v4
       with:
         node-version: 20
+
     - run: npm ci
+
     - run: npm run lint
+
+    - name: Run tests
+      run: npm test

@@ -1,0 +1,132 @@
+name: AEM A11y Demo CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      baseline_url: ${{ steps.extract_urls.outputs.baseline_url }}
+      candidate_urls: ${{ steps.extract_urls.outputs.candidate_urls }}
+    steps:
+      - name: Extract AEM Preview URLs
+        id: extract_urls
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const urlRegex = /https:\/\/[a-zA-Z0-9-]+--[a-zA-Z0-9-]+--[a-zA-Z0-9-]+\.aem\.(?:live|page)/g;
+            const matches = [...new Set(prBody.match(urlRegex) || [])];
+            
+            const baselineUrl = matches.find(url => url.startsWith('https://main--')) || '';
+            const candidateUrls = matches.filter(url => !url.startsWith('https://main--'));
+
+            console.log(`Baseline URL: ${baselineUrl}`);
+            console.log(`Candidate URLs: ${candidateUrls.join(', ')}`);
+
+            core.setOutput('baseline_url', baselineUrl);
+            core.setOutput('candidate_urls', JSON.stringify(candidateUrls));
+
+  audit_baseline:
+    if: needs.setup.outputs.baseline_url != ''
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install and run audits on baseline
+        run: |
+          npm i axe-cli lhci
+          npx axe ${{ needs.setup.outputs.baseline_url }} --save axe-baseline.json || true
+          lhci collect --url=${{ needs.setup.outputs.baseline_url }} --config=./lighthouserc.cjs || true
+      - name: Upload baseline reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-reports
+          path: |
+            axe-baseline.json
+            .lighthouseci/lhr-*.json
+
+  audit_candidate:
+    needs: [setup, audit_baseline]
+    if: fromJson(needs.setup.outputs.candidate_urls)[0] != null
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+
+      - name: Download baseline reports
+        if: needs.audit_baseline.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: baseline-reports
+          path: ./reports/baseline
+
+      - name: Run audits for all candidate URLs
+        id: run_audits
+        run: |
+          node -e '
+            const fs = require("fs");
+            const { execSync } = require("child_process");
+            const urls = JSON.parse(process.env.CANDIDATE_URLS);
+            const reportDir = "./reports/candidate";
+            if (!fs.existsSync(reportDir)) fs.mkdirSync(reportDir, { recursive: true });
+            if (!fs.existsSync(".lighthouseci")) fs.mkdirSync(".lighthouseci");
+
+            for (const url of urls) {
+              console.log(`Auditing ${url}...`);
+              const slug = url.replace(/[^a-zA-Z0-9]/g, "_");
+              
+              try {
+                execSync(`npx axe ${url} --save ${reportDir}/axe-${slug}.json`, { stdio: "inherit" });
+              } catch (e) {
+                console.warn(`Axe audit for ${url} completed with issues or failed.`);
+              }
+
+              try {
+                execSync(`lhci collect --url=${url} --config=./lighthouserc.cjs`, { stdio: "inherit" });
+                const lhrFile = fs.readdirSync(".lighthouseci").find(f => f.startsWith("lhr-"));
+                if (lhrFile) {
+                   fs.renameSync(`.lighthouseci/${lhrFile}`, `${reportDir}/lhr-${slug}.json`);
+                }
+              } catch (e) {
+                console.warn(`Lighthouse audit failed for ${url}.`);
+              }
+            }
+          '
+        env:
+          CANDIDATE_URLS: ${{ needs.setup.outputs.candidate_urls }}
+
+      - name: Upload candidate reports as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: candidate-reports
+          path: ./reports/candidate/
+
+      - name: Generate consolidated report
+        id: generate_report
+        if: always()
+        run: node ./.github/generate-a11y-report.js --output-dir ./reports
+        
+      - name: Post accessibility summary comment
+        if: always() && steps.generate_report.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const reportPath = './reports/summary.md';
+            if (fs.existsSync(reportPath)) {
+              const report = fs.readFileSync(reportPath, 'utf8');
+              github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: report,
+              });
+            } else {
+              console.log('Summary report not found, skipping comment.');
+            }
