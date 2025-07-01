@@ -84,7 +84,6 @@ export default function decorate(block, parentElement = block.parentElement) {
     if (panel) {
       const tab = document.createElement('button');
       tab.id = tabId;
-      tab.setAttribute('role', 'tab');
       tab.setAttribute('aria-controls', panelId);
       tab.setAttribute('aria-selected', 'false');
       tab.textContent = link.textContent.trim();
