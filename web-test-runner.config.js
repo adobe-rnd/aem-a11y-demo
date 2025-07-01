@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 import { playwrightLauncher } from '@web/test-runner-playwright';
 import { esbuildPlugin } from '@web/dev-server-esbuild';
 import { fromRollup } from '@web/dev-server-rollup';
