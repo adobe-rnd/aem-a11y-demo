@@ -59,8 +59,9 @@ function switchTab(newTab) {
 /**
  * Decorates the tabs block with accessibility and functionality.
  * @param {Element} block - The tabs block element.
+ * @param {Element} [parentElement=block.parentElement] - The parent element to search for panels.
  */
-export default function decorate(block) {
+export default function decorate(block, parentElement = block.parentElement) {
   const tablistContainer = block.querySelector('div');
   const tablist = document.createElement('div');
   tablist.setAttribute('role', 'tablist');
@@ -71,7 +72,7 @@ export default function decorate(block) {
   tabLinks.forEach((link, i) => {
     const tabId = `tab-${i}`;
     const panelId = link.getAttribute('href').substring(1);
-    const panel = document.querySelector(`#${panelId}`);
+    const panel = parentElement.querySelector(`#${panelId}`);
 
     if (panel) {
       const tab = document.createElement('button');

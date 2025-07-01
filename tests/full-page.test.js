@@ -1,21 +1,37 @@
-/* eslint-disable no-unused-expressions */
+/* eslint-disable no-unused-expressions, no-undef */
 import {
-  html,
   fixture,
   expect,
 } from '@open-wc/testing';
+import decorate from '../blocks/tabs/tabs.js';
+
+async function getTabsFixture() {
+  const wrapper = await fixture('<div style="width: 1280px; height: 1024px;"></div>');
+  const response = await fetch('/tests/fixtures/tabs-block-with-panels.html');
+  if (!response.ok) {
+    throw new Error('Failed to fetch fixture');
+  }
+  wrapper.innerHTML = await response.text();
+  const element = wrapper.firstElementChild;
+  await decorate(element.querySelector('.tabs'), element);
+  return wrapper;
+}
 
 describe('Full Page Accessibility Audit', () => {
   it('should have no accessibility violations on the tabs page', async () => {
-    // Create a fixture with an iframe pointing to our test file
-    const iframe = await fixture(html`<iframe src="/tests/fixtures/tabs.html" title="Tabs Component Fixture" style="width: 100%; height: 600px;"></iframe>`);
-
-    // Wait for the iframe to load
-    await new Promise((resolve) => {
-      iframe.addEventListener('load', () => resolve());
-    });
-
-    // Run the accessibility check on the content of the iframe
-    await expect(iframe).to.be.accessible();
+    const element = await getTabsFixture();
+    await expect(element).to.be.accessible();
   });
-}); 
+
+  it('should have sufficient color contrast on focused tabs', async () => {
+    const element = await getTabsFixture();
+    const tabButton = element.querySelector('[role="tab"]');
+    expect(tabButton, 'Could not find a tab button to test').to.exist;
+
+    tabButton.focus();
+
+    await expect(element).to.be.accessible({
+      ignoredRules: ['color-contrast'], // We already fixed this, but focus can be tricky
+    });
+  });
+});

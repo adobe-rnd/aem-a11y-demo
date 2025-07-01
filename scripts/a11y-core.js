@@ -3,6 +3,7 @@
  * @param {KeyboardEvent} e - The keyboard event.
  * @param {Function} activateItem - The function to call to activate an item.
  */
+// eslint-disable-next-line import/prefer-default-export
 export function handleKeyboardNavigation(e, activateItem) {
   const items = [...e.currentTarget.querySelectorAll('[role="tab"], [role="button"]')];
   const currentItem = e.target;

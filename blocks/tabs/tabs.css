@@ -33,6 +33,11 @@
   margin-bottom: calc(var(--tab-border-width) * -1);
 }
 
+[role="tab"]:focus {
+  color: inherit;
+  background-color: inherit;
+}
+
 [role="tab"]:hover {
   background-color: var(--tab-background-hover);
 }
@@ -43,10 +48,13 @@
   font-weight: var(--tab-text-weight-active);
 }
 
-[role="tab"]:focus-visible {
+[role="tab"]:focus-visible,
+[role="tab"]:focus-visible:hover {
   color: var(--tab-focus-text-color);
+  background-color: var(--tab-focus-outline-color);
   outline: var(--tab-border-width) solid var(--tab-focus-outline-color);
   outline-offset: var(--tab-border-width);
+  z-index: 1;
 }
 
 .tabs-panels {
