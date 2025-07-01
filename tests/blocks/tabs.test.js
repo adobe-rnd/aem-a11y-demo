@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import {
   html,
   fixture,
@@ -59,7 +60,7 @@ describe('Tabs Block', () => {
     });
 
     describe('Mouse Interaction', () => {
-      it('switches to the second tab on click', () => {
+      it('switches to the second tab on click and remains accessible', async () => {
         const secondTab = block.querySelectorAll('[role="tab"]')[1];
         secondTab.click();
         const firstTab = block.querySelector('[role="tab"]');
@@ -69,31 +70,44 @@ describe('Tabs Block', () => {
         expect(secondTab.getAttribute('aria-selected')).to.equal('true');
         expect(firstPanel.hasAttribute('hidden')).to.be.true;
         expect(secondPanel.hasAttribute('hidden')).to.be.false;
+        await expect(block).to.be.accessible();
       });
     });
 
     describe('Keyboard Navigation', () => {
-      it('navigates between tabs with ArrowRight and ArrowLeft', () => {
+      it('navigates between tabs with ArrowRight and ArrowLeft and remains accessible', async () => {
         const [firstTab, secondTab] = block.querySelectorAll('[role="tab"]');
         expect(firstTab.getAttribute('aria-selected')).to.equal('true');
+
+        // Navigate right
         firstTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
         expect(secondTab.getAttribute('aria-selected')).to.equal('true');
         expect(document.activeElement).to.equal(secondTab);
+        await expect(block).to.be.accessible();
+
+        // Navigate right again (wraps around)
         secondTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
         expect(firstTab.getAttribute('aria-selected')).to.equal('true');
         expect(document.activeElement).to.equal(firstTab);
+
+        // Navigate left
         firstTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
         expect(secondTab.getAttribute('aria-selected')).to.equal('true');
         expect(document.activeElement).to.equal(secondTab);
       });
 
-      it('navigates to first and last tabs with Home and End keys', () => {
+      it('navigates to first and last tabs with Home and End keys and remains accessible', async () => {
         const [firstTab, secondTab] = block.querySelectorAll('[role="tab"]');
         secondTab.click();
         expect(secondTab.getAttribute('aria-selected')).to.equal('true');
+
+        // Navigate with Home key
         secondTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
         expect(firstTab.getAttribute('aria-selected')).to.equal('true');
         expect(document.activeElement).to.equal(firstTab);
+        await expect(block).to.be.accessible();
+
+        // Navigate with End key
         firstTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
         expect(secondTab.getAttribute('aria-selected')).to.equal('true');
         expect(document.activeElement).to.equal(secondTab);
@@ -145,7 +159,7 @@ describe('Tabs Block', () => {
       expect(panel.hasAttribute('aria-busy')).to.be.false;
       secondTab.click();
       expect(panel.getAttribute('aria-busy')).to.equal('true');
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => { setTimeout(resolve, 100); });
       expect(panel.getAttribute('aria-busy')).to.be.null;
       expect(panel.textContent).to.include('Contact Us');
     });

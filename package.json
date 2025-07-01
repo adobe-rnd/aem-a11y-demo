@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "description": "AEM Accessibility Demo Project",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "web-test-runner tests/**/*.test.js --node-resolve",
-    "test:lighthouse": "lhci autorun"
+    "test": "web-test-runner",
+    "test:lighthouse": "start-server-and-test test:server http://localhost:8000/tests/fixtures/tabs.html test:lhci",
+    "test:lhci": "lhci autorun",
+    "test:server": "npx http-server . -p 8000 -c-1"
   },
   "keywords": [
     "aem",
@@ -18,12 +21,17 @@
     "@lhci/cli": "^0.15.1",
     "@open-wc/testing": "^4.0.0",
     "@web/test-runner": "^0.13.31",
+    "@web/test-runner-commands": "^0.9.0",
+    "@web/test-runner-playwright": "^0.11.1",
     "axe-core": "4.10.3",
     "chai": "^4.5.0",
     "eslint": "8.57.1",
     "eslint-config-airbnb-base": "15.0.0",
+    "eslint-plugin-chai-friendly": "^1.1.0",
     "eslint-plugin-import": "2.32.0",
+    "http-server": "^14.1.1",
     "mocha": "^9.2.2",
+    "start-server-and-test": "^2.0.12",
     "stylelint": "16.21.0",
     "stylelint-config-standard": "38.0.0"
   },

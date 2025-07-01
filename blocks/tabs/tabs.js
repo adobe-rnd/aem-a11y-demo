@@ -1,3 +1,5 @@
+// import { handleKeyboardNavigation } from '../../scripts/a11y-core.js';
+
 const originalPanelLinks = {};
 
 /**
@@ -55,43 +57,6 @@ function switchTab(newTab) {
 }
 
 /**
- * Handles keyboard navigation for tabs
- * @param {KeyboardEvent} e - The keyboard event
- */
-function handleKeyboardNavigation(e) {
-  const tabList = e.currentTarget;
-  const tabs = [...tabList.querySelectorAll('[role="tab"]')];
-  const currentTab = e.target;
-  const isManual = tabList.closest('.tabs.manual');
-  let tabIndex = tabs.indexOf(currentTab);
-
-  const activateTab = (tab) => {
-    if (isManual) {
-      tab.focus();
-    } else {
-      switchTab(tab);
-    }
-  };
-
-  if (e.key === 'ArrowRight') {
-    tabIndex = (tabIndex + 1) % tabs.length;
-    activateTab(tabs[tabIndex]);
-  } else if (e.key === 'ArrowLeft') {
-    tabIndex = (tabIndex - 1 + tabs.length) % tabs.length;
-    activateTab(tabs[tabIndex]);
-  } else if (e.key === 'Home') {
-    e.preventDefault();
-    activateTab(tabs[0]);
-  } else if (e.key === 'End') {
-    e.preventDefault();
-    activateTab(tabs[tabs.length - 1]);
-  } else if (isManual && (e.key === 'Enter' || e.key === ' ')) {
-    e.preventDefault();
-    switchTab(currentTab);
-  }
-}
-
-/**
  * Decorates the tabs block with accessibility and functionality.
  * @param {Element} block - The tabs block element.
  */
@@ -126,7 +91,7 @@ export default function decorate(block) {
         originalPanelLinks[panelLink.href] = panelLink.cloneNode(true);
         panel.dataset.src = panelLink.href;
         panel.setAttribute('aria-live', 'polite');
-        panel.innerHTML = 'Loading...';
+        panel.innerHTML = window.placeholders?.loading || 'Loading...';
       }
     }
   });
@@ -139,7 +104,41 @@ export default function decorate(block) {
     }
   });
 
-  tablist.addEventListener('keydown', handleKeyboardNavigation);
+  tablist.addEventListener('keydown', (e) => {
+    const isManual = e.currentTarget.closest('.tabs.manual');
+    let newTab;
+
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      const tabs = [...e.currentTarget.querySelectorAll('[role="tab"]')];
+      const currentTab = e.target;
+      const tabIndex = tabs.indexOf(currentTab);
+      newTab = tabs[(tabIndex + 1) % tabs.length];
+      newTab.focus();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      const tabs = [...e.currentTarget.querySelectorAll('[role="tab"]')];
+      const currentTab = e.target;
+      const tabIndex = tabs.indexOf(currentTab);
+      newTab = tabs[(tabIndex - 1 + tabs.length) % tabs.length];
+      newTab.focus();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      newTab = e.currentTarget.querySelector('[role="tab"]');
+      newTab.focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      newTab = e.currentTarget.querySelector('[role="tab"]:last-of-type');
+      newTab.focus();
+    }
+
+    if (!isManual && newTab) {
+      switchTab(newTab);
+    }
+
+    if (isManual && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      switchTab(e.target);
+    }
+  });
 
   const firstTab = tablist.querySelector('[role="tab"]');
   if (firstTab) {
