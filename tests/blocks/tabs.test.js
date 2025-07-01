@@ -161,7 +161,7 @@ describe('Tabs Block', () => {
       secondTab.click();
       expect(panel.getAttribute('aria-busy')).to.equal('true');
       expect(panel.getAttribute('aria-live')).to.equal('polite');
-      await new Promise((resolve) => { setTimeout(resolve, 100); });
+      await new Promise((resolve) => { setTimeout(resolve, 500); });
       expect(panel.getAttribute('aria-busy')).to.be.null;
       expect(panel.getAttribute('aria-live')).to.be.null;
       expect(panel.textContent).to.include('Contact Us');

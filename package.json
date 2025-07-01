@@ -5,12 +5,12 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "web-test-runner",
+    "test": "web-test-runner && npm run test:lighthouse",
     "test:update-visuals": "web-test-runner --update-visual-baseline",
     "test:coverage": "web-test-runner --coverage",
-    "test:lighthouse": "lhci autorun",
+    "test:lighthouse": "start-server-and-test 'npx http-server . -p 9009 -c-1' http://localhost:9009/tests/fixtures/tabs.html 'lhci collect --url=http://localhost:9009/tests/fixtures/tabs.html --chrome-flags=\"--no-sandbox --headless=new --disable-dev-shm-usage\" && lhci assert'",
     "test:lhci": "lhci autorun",
-    "test:server": "npx http-server . -p 8000 -c-1"
+    "test:server": "npx http-server . -p 9009 -c-1"
   },
   "keywords": [
     "aem",

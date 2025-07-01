@@ -1,7 +1,7 @@
 module.exports = {
   ci: {
     collect: {
-      url: ['http://localhost:8000/tests/fixtures/tabs.html'],
+      url: ['http://localhost:9009/tests/fixtures/tabs.html'],
     },
     assert: {
       assertions: {
