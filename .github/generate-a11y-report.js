@@ -13,11 +13,6 @@
 import fs from 'fs';
 import path from 'path';
 
-const REPORTS_DIR = './reports';
-const BASELINE_DIR = path.join(REPORTS_DIR, 'baseline');
-const CANDIDATE_DIR = path.join(REPORTS_DIR, 'candidate');
-const OUTPUT_FILE = path.join(REPORTS_DIR, 'summary.md');
-
 /**
  * Reads a JSON file safely.
  * @param {String} filePath Path to the JSON file.
@@ -70,40 +65,26 @@ function formatViolationsList(violations) {
 }
 
 /**
- * Finds the single Lighthouse report file in a directory.
- * @param {String} dir The directory to search.
- * @return {String|null} Path to the report file or null.
- */
-function findLighthouseReport(dir) {
-    if (!fs.existsSync(dir)) return null;
-    const files = fs.readdirSync(dir).filter((file) => file.startsWith('lhr-') && file.endsWith('.json'));
-    return files.length > 0 ? path.join(dir, files[0]) : null;
-}
-
-/**
  * Main function to generate the accessibility summary report.
+ * @param {String} reportsDir Directory containing the report files.
+ * @param {String} outputFile Path to write the final summary markdown file.
  */
-function main() {
-  if (!fs.existsSync(CANDIDATE_DIR)) {
-    console.log('No candidate reports found. Exiting.');
+function main(reportsDir, outputFile) {
+  if (!fs.existsSync(reportsDir)) {
+    console.log(`Reports directory not found: ${reportsDir}. Exiting.`);
     return;
   }
 
-  const baselineAxeReport = readJsonFile(path.join(BASELINE_DIR, 'axe-baseline.json'));
-  const baselineLhReport = readJsonFile(findLighthouseReport(BASELINE_DIR));
-  const hasBaseline = !!baselineAxeReport && !!baselineLhReport;
-
-  const candidateFiles = fs.readdirSync(CANDIDATE_DIR);
+  const reportFiles = fs.readdirSync(reportsDir);
   const reportsBySlug = {};
 
-  candidateFiles.forEach((file) => {
-    const slug = file.replace('axe-', '').replace('lhr-', '').replace('.json', '');
+  // Group reports by their slug (e.g., 'tabs', 'contact_us')
+  reportFiles.forEach((file) => {
+    const [type, kind, ...slugParts] = file.replace('.json', '').split('-');
+    const slug = slugParts.join('-');
     if (!reportsBySlug[slug]) reportsBySlug[slug] = {};
-    if (file.startsWith('axe-')) {
-      reportsBySlug[slug].axe = readJsonFile(path.join(CANDIDATE_DIR, file));
-    } else if (file.startsWith('lhr-')) {
-      reportsBySlug[slug].lhr = readJsonFile(path.join(CANDIDATE_DIR, file));
-    }
+    if (!reportsBySlug[slug][kind]) reportsBySlug[slug][kind] = {};
+    reportsBySlug[slug][kind][type] = readJsonFile(path.join(reportsDir, file));
   });
 
   let summaryTable = '| URL | Accessibility Score | New Issues | Fixed Issues |\n';
@@ -111,12 +92,19 @@ function main() {
   let detailsSection = '';
 
   for (const slug in reportsBySlug) {
-    const { axe: axeReport, lhr: lhReport } = reportsBySlug[slug];
-    if (!axeReport || !lhReport) continue;
+    const pageReports = reportsBySlug[slug];
+    const candidateAxe = pageReports.candidate?.axe;
+    const candidateLhr = pageReports.candidate?.lhr;
+    
+    if (!candidateAxe || !candidateLhr) continue;
 
-    const url = lhReport.finalUrl;
-    const lhScore = Math.round((lhReport.categories.accessibility.score || 0) * 100);
-    const axeViolations = (axeReport[0]?.violations) || [];
+    const url = candidateLhr.finalUrl;
+    const lhScore = Math.round((candidateLhr.categories.accessibility.score || 0) * 100);
+    const axeViolations = (candidateAxe[0]?.violations) || [];
+    
+    const baselineAxe = pageReports.baseline?.axe;
+    const baselineLhr = pageReports.baseline?.lhr;
+    const hasBaseline = !!baselineAxe && !!baselineLhr;
 
     let scoreCell = `${lhScore}/100`;
     let newIssuesCell = hasBaseline ? '0' : 'N/A';
@@ -125,11 +113,11 @@ function main() {
     let detailForUrl = `<details><summary><strong>${url}</strong></summary>\n\n`;
 
     if (hasBaseline) {
-      const lhBaselineScore = Math.round((baselineLhReport.categories.accessibility.score || 0) * 100);
+      const lhBaselineScore = Math.round((baselineLhr.categories.accessibility.score || 0) * 100);
       const lhScoreDiff = lhScore - lhBaselineScore;
-      scoreCell = `${lhScore}/100 (${getScoreChangeEmoji(lhScoreDiff)} ${lhScoreDiff > 0 ? `+${lhScoreDiff}` : lhScoreDiff})`;
+      scoreCell = `${lhScore}/100 (${getScoreChangeEmoji(lhScoreDiff)} ${lhScoreDiff >= 0 ? `+${lhScoreDiff}` : lhScoreDiff})`;
 
-      const baselineAxeViolations = (baselineAxeReport[0]?.violations) || [];
+      const baselineAxeViolations = (baselineAxe[0]?.violations) || [];
       const { new: newAxe, fixed: fixedAxe } = diffViolations(baselineAxeViolations, axeViolations);
       
       newIssuesCell = newAxe.length;
@@ -144,15 +132,22 @@ function main() {
     
     detailForUrl += `</details>\n`;
     
-    summaryTable += `| [${url.substring(8, 48)}...](${url}) | ${scoreCell} | ${newIssuesCell} | ${fixedIssuesCell} |\n`;
+    const truncatedUrl = url.length > 50 ? `${url.substring(0, 47)}...` : url;
+    summaryTable += `| [${truncatedUrl}](${url}) | ${scoreCell} | ${newIssuesCell} | ${fixedIssuesCell} |\n`;
     detailsSection += detailForUrl;
   }
 
   const runUrl = `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
   let finalReport = `## ♿ Accessibility Summary\n\n${summaryTable}\n<hr>\n\n### Detailed Breakdown\n\n${detailsSection}\n\n---\n*Full reports are available as [build artifacts](${runUrl}).*`;
   
-  fs.writeFileSync(OUTPUT_FILE, finalReport, 'utf-8');
-  console.log(`Accessibility summary report generated at ${OUTPUT_FILE}`);
+  fs.writeFileSync(outputFile, finalReport, 'utf-8');
+  console.log(`Accessibility summary report generated at ${outputFile}`);
 }
 
-main(); 
+const args = process.argv.slice(2).reduce((acc, arg) => {
+  const [key, value] = arg.split('=');
+  acc[key.replace(/^--/, '')] = value;
+  return acc;
+}, {});
+
+main(args['reports-dir'], args['output-file']); 
