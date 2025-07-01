@@ -24,7 +24,10 @@ function switchTab(newTab) {
     newPanel.removeAttribute('hidden');
     const hasContent = newPanel.firstElementChild;
     const dataSource = newPanel.dataset.src;
-    if (!hasContent && dataSource) {
+    const isLoaded = newPanel.dataset.loaded === 'true';
+
+    // Only load async content if it hasn't been loaded before
+    if (!hasContent && dataSource && !isLoaded) {
       newPanel.setAttribute('aria-busy', 'true');
       fetch(dataSource)
         .then((response) => {
@@ -40,6 +43,8 @@ function switchTab(newTab) {
             newPanel.append(content);
           }
           newPanel.removeAttribute('aria-busy');
+          newPanel.removeAttribute('aria-live');
+          newPanel.dataset.loaded = 'true'; // Mark as loaded
         })
         .catch(() => {
           newPanel.innerHTML = '';
@@ -50,6 +55,8 @@ function switchTab(newTab) {
             newPanel.textContent = 'Error loading content.';
           }
           newPanel.removeAttribute('aria-busy');
+          newPanel.removeAttribute('aria-live');
+          newPanel.dataset.loaded = 'true'; // Mark as loaded even on error
         });
     }
   }
@@ -92,6 +99,7 @@ export default function decorate(block, parentElement = block.parentElement) {
         originalPanelLinks[panelLink.href] = panelLink.cloneNode(true);
         panel.dataset.src = panelLink.href;
         panel.setAttribute('aria-live', 'polite');
+        panel.setAttribute('aria-busy', 'false');
         panel.innerHTML = window.placeholders?.loading || 'Loading...';
       }
     }

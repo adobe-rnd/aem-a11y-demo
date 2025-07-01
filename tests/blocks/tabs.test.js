@@ -156,11 +156,14 @@ describe('Tabs Block', () => {
     it('should load content asynchronously', async () => {
       const secondTab = block.querySelectorAll('[role="tab"]')[1];
       const panel = document.getElementById('panel2');
-      expect(panel.hasAttribute('aria-busy')).to.be.false;
+      expect(panel.getAttribute('aria-busy')).to.equal('false');
+      expect(panel.getAttribute('aria-live')).to.equal('polite');
       secondTab.click();
       expect(panel.getAttribute('aria-busy')).to.equal('true');
+      expect(panel.getAttribute('aria-live')).to.equal('polite');
       await new Promise((resolve) => { setTimeout(resolve, 100); });
       expect(panel.getAttribute('aria-busy')).to.be.null;
+      expect(panel.getAttribute('aria-live')).to.be.null;
       expect(panel.textContent).to.include('Contact Us');
     });
   });

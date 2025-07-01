@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "test": "web-test-runner",
-    "test:lighthouse": "start-server-and-test test:server http://localhost:8000/tests/fixtures/tabs.html test:lhci",
+    "test:update-visuals": "web-test-runner --update-visual-baseline",
+    "test:coverage": "web-test-runner --coverage",
+    "test:lighthouse": "lhci autorun",
     "test:lhci": "lhci autorun",
     "test:server": "npx http-server . -p 8000 -c-1"
   },
