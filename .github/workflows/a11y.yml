@@ -80,7 +80,7 @@ jobs:
               const lhrFile = `${reportDir}/lhr-${type}-${slug}.json`;
 
               try {
-                execSync(`node ./.github/run-axe.js --url ${url} --output ${axeFile}`, { stdio: "inherit" });
+                execSync(`node ./.github/run-axe.cjs --url ${url} --output ${axeFile}`, { stdio: "inherit" });
               } catch (e) {
                 console.warn(`Axe audit for ${url} failed to execute.`);
               }

@@ -86,13 +86,42 @@ function diffViolations(baseline = [], candidate = []) {
 }
 
 /**
- * Formats a list of violations into a markdown list.
+ * Formats a list of violations into a detailed markdown list.
  * @param {Array} violations The violations to format.
  * @return {String} The markdown list.
  */
 function formatViolationsList(violations) {
-  if (!violations || violations.length === 0) return 'None.\n';
-  return violations.map((v) => `- **${v.impact.toUpperCase()}**: ${v.help} ([details](${v.helpUrl}))`).join('\n');
+  if (!violations || violations.length === 0) {
+    return 'None.\n';
+  }
+
+  let list = '';
+  violations.forEach((violation) => {
+    list += `- **${violation.impact.toUpperCase()}**: ${violation.help} ([details](${violation.helpUrl}))\n`;
+    violation.nodes.forEach((node) => {
+      const failureSummary = node.failureSummary.replace(/\\n/g, ' ').replace(/ +/g, ' ').trim();
+      list += `  - ${failureSummary}\n`;
+      list += `    - ` + '`' + `${node.html}` + '`\n';
+    });
+  });
+  return list;
+}
+
+/**
+ * Calculates a score out of 100 based on Axe violations.
+ * @param {Array} violations - An array of Axe violation objects.
+ * @return {Number} The calculated score.
+ */
+function calculateAxeScore(violations = []) {
+  const penalties = {
+    critical: 15,
+    serious: 8,
+    moderate: 3,
+    minor: 1,
+  };
+
+  const totalPenalty = violations.reduce((acc, v) => acc + (penalties[v.impact] || 0), 0);
+  return Math.max(0, 100 - totalPenalty);
 }
 
 /**
@@ -132,27 +161,41 @@ function main(reportsDir, outputFile) {
     const candidateAxe = pageReports.candidate?.axe;
     const candidateLhr = pageReports.candidate?.lhr;
     
-    if (!candidateAxe || !candidateLhr) continue;
+    // We need at least an Axe report to proceed
+    if (!candidateAxe) continue;
 
-    const url = candidateLhr.finalUrl;
-    const lhScore = Math.round((candidateLhr.categories.accessibility.score || 0) * 100);
+    const url = candidateLhr?.finalUrl || candidateAxe[0]?.url || slug;
     const axeViolations = (candidateAxe[0]?.violations) || [];
+    const axeScore = calculateAxeScore(axeViolations);
+    const lhScore = candidateLhr ? Math.round((candidateLhr.categories.accessibility.score || 0) * 100) : null;
     
     const baselineAxe = pageReports.baseline?.axe;
     const baselineLhr = pageReports.baseline?.lhr;
-    const hasBaseline = !!baselineAxe && !!baselineLhr;
+    const hasBaseline = !!baselineAxe;
 
-    let scoreCell = `${lhScore}/100`;
+    let scoreCell;
+    
+    if (hasBaseline) {
+        const baselineAxeViolations = (baselineAxe[0]?.violations) || [];
+        const baselineAxeScore = calculateAxeScore(baselineAxeViolations);
+        const baselineLhScore = baselineLhr ? Math.round((baselineLhr.categories.accessibility.score || 0) * 100) : null;
+
+        const candidateCombinedScore = lhScore !== null ? Math.round(axeScore * 0.6 + lhScore * 0.4) : axeScore;
+        const baselineCombinedScore = baselineLhScore !== null ? Math.round(baselineAxeScore * 0.6 + baselineLhScore * 0.4) : baselineAxeScore;
+        
+        const scoreDiff = candidateCombinedScore - baselineCombinedScore;
+        scoreCell = `${candidateCombinedScore}/100 (${getScoreChangeEmoji(scoreDiff)} ${scoreDiff >= 0 ? `+${scoreDiff}` : scoreDiff})`;
+    } else {
+        const combinedScore = lhScore !== null ? Math.round(axeScore * 0.6 + lhScore * 0.4) : axeScore;
+        scoreCell = `${combinedScore}/100`;
+    }
+
     let newIssuesCell = hasBaseline ? '0' : 'N/A';
     let fixedIssuesCell = hasBaseline ? '0' : 'N/A';
     
     let detailForUrl = `<details><summary><strong>${url}</strong></summary>\n\n`;
 
     if (hasBaseline) {
-      const lhBaselineScore = Math.round((baselineLhr.categories.accessibility.score || 0) * 100);
-      const lhScoreDiff = lhScore - lhBaselineScore;
-      scoreCell = `${lhScore}/100 (${getScoreChangeEmoji(lhScoreDiff)} ${lhScoreDiff >= 0 ? `+${lhScoreDiff}` : lhScoreDiff})`;
-
       const baselineAxeViolations = (baselineAxe[0]?.violations) || [];
       const { new: newAxe, fixed: fixedAxe } = diffViolations(baselineAxeViolations, axeViolations);
       
@@ -168,8 +211,8 @@ function main(reportsDir, outputFile) {
     
     detailForUrl += `</details>\n`;
     
-    const truncatedUrl = url.length > 50 ? `${url.substring(0, 47)}...` : url;
-    summaryTable += `| [${truncatedUrl}](${url}) | ${scoreCell} | ${newIssuesCell} | ${fixedIssuesCell} |\n`;
+    const { pathname } = new URL(url);
+    summaryTable += `| [${pathname}](${url}) | ${scoreCell} | ${newIssuesCell} | ${fixedIssuesCell} |\n`;
     detailsSection += detailForUrl;
   }
 

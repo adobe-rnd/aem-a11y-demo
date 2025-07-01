@@ -10,9 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { chromium } from 'playwright';
-import { AxeBuilder } from 'axe-playwright';
-import fs from 'fs';
+const { chromium } = require('playwright');
+const AxeBuilder = require('@axe-core/playwright').default;
+const fs = require('fs');
 
 /**
  * Parses command line arguments.
@@ -37,7 +37,8 @@ function parseArgs() {
  */
 async function runAxe(url, outputFile) {
     const browser = await chromium.launch();
-    const page = await browser.newPage();
+    const context = await browser.newContext();
+    const page = await context.newPage();
     try {
         await page.goto(url, { waitUntil: 'networkidle' });
         const results = await new AxeBuilder({ page }).analyze();

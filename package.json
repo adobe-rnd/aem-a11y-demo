@@ -26,7 +26,7 @@
   "license": "ISC",
   "devDependencies": {
     "@babel/eslint-parser": "7.27.5",
-    "@lhci/cli": "^0.15.1",
+    "@lhci/cli": "^0.13.0",
     "@open-wc/testing": "^4.0.0",
     "@playwright/test": "^1.45.1",
     "@rollup/plugin-commonjs": "^28.0.6",
@@ -36,14 +36,13 @@
     "@web/test-runner-commands": "^0.9.0",
     "@web/test-runner-playwright": "^0.11.1",
     "@web/test-runner-visual-regression": "^0.10.0",
-    "axe-cli": "^3.2.1",
-    "axe-core": "^4.10.3",
+    "axe-core": "^4.9.1",
     "chai": "^5.1.1",
     "chai-a11y-axe": "^1.1.2",
-    "eslint": "^8.57.1",
+    "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-chai-friendly": "^1.1.0",
-    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-playwright": "^1.6.2",
     "http-server": "^14.1.1",
     "mocha": "^10.5.2",
@@ -53,7 +52,7 @@
     "jsdom": "^24.1.0",
     "lighthouse": "^12.1.0",
     "sinon": "^18.0.0",
-    "axe-playwright": "^2.0.1"
+    "@axe-core/playwright": "^4.9.1"
   },
   "directories": {
     "test": "tests"
