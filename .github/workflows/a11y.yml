@@ -73,18 +73,25 @@ jobs:
             if (!fs.existsSync(".lighthouseci")) fs.mkdirSync(".lighthouseci"); 
 
             function runAudit(url, type, slug) {
-              console.log(`Auditing ${url} (${type})...`);
+              if (!url || !type || !slug) {
+                console.warn("Audit skipped due to missing url, type, or slug.");
+                return;
+              }
+              console.log(`Auditing ${url} (type: ${type}, slug: ${slug})`);
+              const axeFile = `${reportDir}/axe-${type}-${slug}.json`;
+              const lhrFile = `${reportDir}/lhr-${type}-${slug}.json`;
+
               try {
-                execSync(`npx axe ${url} --save ${reportDir}/axe-${type}-${slug}.json`, { stdio: "inherit" });
+                execSync(`npx axe ${url} --save ${axeFile}`, { stdio: "inherit" });
               } catch (e) {
                 console.warn(`Axe audit for ${url} completed with issues or failed.`);
               }
 
               try {
                 execSync(`npx lhci collect --url=${url} --config=./lighthouserc.cjs`, { stdio: "inherit" });
-                const lhrFile = fs.readdirSync(".lighthouseci").find(f => f.startsWith("lhr-"));
-                if (lhrFile) {
-                    fs.renameSync(`.lighthouseci/${lhrFile}`, `${reportDir}/lhr-${type}-${slug}.json`);
+                const tempLhr = fs.readdirSync(".lighthouseci").find(f => f.startsWith("lhr-"));
+                if (tempLhr) {
+                    fs.renameSync(`.lighthouseci/${tempLhr}`, lhrFile);
                 }
               } catch (e) {
                 console.warn(`Lighthouse audit failed for ${url}.`);
@@ -93,12 +100,10 @@ jobs:
 
             for (const pair of urlPairs) {
               if (!pair.candidate) continue;
-              const slug = new URL(pair.candidate).pathname.replace(/\//g, "_").replace(/^_|_$/, "");
+              const slug = new URL(pair.candidate).pathname.replace(/[^a-zA-Z0-9]/g, "_");
               
               runAudit(pair.candidate, "candidate", slug);
-              if (pair.baseline) {
-                runAudit(pair.baseline, "baseline", slug);
-              }
+              runAudit(pair.baseline, "baseline", slug);
             }
           '
         env:

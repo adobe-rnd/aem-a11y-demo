@@ -14,6 +14,37 @@ import fs from 'fs';
 import path from 'path';
 
 /**
+ * Parses command line arguments.
+ * Supports: --arg value, --arg=value, --arg
+ * @return {Object} Parsed arguments.
+ */
+function parseArgs() {
+  const args = {};
+  process.argv.slice(2).forEach((arg) => {
+    if (arg.startsWith('--')) {
+      const [key, value] = arg.substring(2).split('=');
+      if (value !== undefined) {
+        args[key] = value;
+      } else {
+        args[key] = true;
+      }
+    }
+  });
+
+  // Handle "--key value" format
+  process.argv.slice(2).forEach((arg, i, arr) => {
+    if (arg.startsWith('--') && args[arg.substring(2)] === true) {
+      const next = arr[i + 1];
+      if (next && !next.startsWith('--')) {
+        args[arg.substring(2)] = next;
+      }
+    }
+  });
+
+  return args;
+}
+
+/**
  * Reads a JSON file safely.
  * @param {String} filePath Path to the JSON file.
  * @return {Object|null} Parsed JSON object or null.
@@ -70,6 +101,11 @@ function formatViolationsList(violations) {
  * @param {String} outputFile Path to write the final summary markdown file.
  */
 function main(reportsDir, outputFile) {
+  if (!reportsDir || !outputFile) {
+    console.error('Error: --reports-dir and --output-file arguments are required.');
+    process.exit(1);
+  }
+
   if (!fs.existsSync(reportsDir)) {
     console.log(`Reports directory not found: ${reportsDir}. Exiting.`);
     return;
@@ -144,10 +180,5 @@ function main(reportsDir, outputFile) {
   console.log(`Accessibility summary report generated at ${outputFile}`);
 }
 
-const args = process.argv.slice(2).reduce((acc, arg) => {
-  const [key, value] = arg.split('=');
-  acc[key.replace(/^--/, '')] = value;
-  return acc;
-}, {});
-
+const args = parseArgs();
 main(args['reports-dir'], args['output-file']); 
