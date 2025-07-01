@@ -74,7 +74,7 @@ jobs:
 
             function runAudit(url, type, slug) {
               if (!url || !type || !slug) {
-                console.warn("Audit skipped due to missing url, type, or slug.");
+                // This is expected if a candidate has no corresponding baseline
                 return;
               }
               console.log(`Auditing ${url} (type: ${type}, slug: ${slug})`);
@@ -82,7 +82,8 @@ jobs:
               const lhrFile = `${reportDir}/lhr-${type}-${slug}.json`;
 
               try {
-                execSync(`npx axe ${url} --save ${axeFile}`, { stdio: "inherit" });
+                // Use Playwrights browser to avoid version mismatch issues
+                execSync(`npx axe ${url} --save ${axeFile} --browser=playwright`, { stdio: "inherit" });
               } catch (e) {
                 console.warn(`Axe audit for ${url} completed with issues or failed.`);
               }
@@ -100,6 +101,7 @@ jobs:
 
             for (const pair of urlPairs) {
               if (!pair.candidate) continue;
+              // Sanitize the path to create a valid filename slug
               const slug = new URL(pair.candidate).pathname.replace(/[^a-zA-Z0-9]/g, "_");
               
               runAudit(pair.candidate, "candidate", slug);
