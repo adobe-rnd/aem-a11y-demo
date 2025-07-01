@@ -12,6 +12,7 @@ function switchTab(newTab) {
 
   if (oldTab) {
     oldTab.setAttribute('aria-selected', 'false');
+    oldTab.setAttribute('tabindex', '-1');
     const oldPanel = document.querySelector(`#${oldTab.getAttribute('aria-controls')}`);
     if (oldPanel) {
       oldPanel.setAttribute('hidden', '');
@@ -19,6 +20,7 @@ function switchTab(newTab) {
   }
 
   newTab.setAttribute('aria-selected', 'true');
+  newTab.setAttribute('tabindex', '0');
   const newPanel = document.querySelector(`#${newTab.getAttribute('aria-controls')}`);
   if (newPanel) {
     newPanel.removeAttribute('hidden');
@@ -90,6 +92,7 @@ export default function decorate(block) {
     const panelId = link.href ? `${new URL(link.href).hash.substring(1)}` : getRandomId('tabpanel');
     const panel = block.querySelector(`#${panelId}`)?.closest('div')
       || block.closest('.section')?.querySelector(`#${panelId}`)?.closest('div')
+      || block.parentElement.closest('div')?.querySelector(`#${panelId}`)?.closest('div')
       || block.children.item(i + 1);
 
     if (panel) {
@@ -98,6 +101,7 @@ export default function decorate(block) {
       tab.setAttribute('role', 'tab');
       tab.setAttribute('aria-controls', `${panelId}-container`);
       tab.setAttribute('aria-selected', 'false');
+      tab.setAttribute('tabindex', '-1');
       tab.textContent = link.textContent.trim();
       tablist.append(tab);
 

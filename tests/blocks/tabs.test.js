@@ -3,7 +3,9 @@ import {
   html,
   fixture,
   expect,
+  waitUntil,
 } from '@open-wc/testing';
+import { sendKeys } from '@web/test-runner-commands';
 import decorate from '../../blocks/tabs/tabs.js';
 
 describe('Tabs Block', () => {
@@ -169,6 +171,57 @@ describe('Tabs Block', () => {
       expect(panel.getAttribute('aria-busy')).to.be.null;
       expect(panel.getAttribute('aria-live')).to.be.null;
       expect(panel.textContent).to.include('Contact Us');
+    });
+  });
+
+  describe('Roving Tabindex', () => {
+    it('should allow tabbing into and out of the tablist', async () => {
+      const element = await fixture(html`
+        <div>
+          <button id="before">Before</button>
+          <div class="tabs">
+            <div>
+              <ul>
+                <li><a href="#panel1">Tab 1</a></li>
+                <li><a href="#panel2">Tab 2</a></li>
+              </ul>
+            </div>
+          </div>
+          <div><div id="panel1">Panel 1</div></div>
+          <div><div id="panel2">Panel 2</div></div>
+          <button id="after">After</button>
+        </div>
+      `);
+      const block = element.querySelector('.tabs');
+      decorate(block);
+      await waitUntil(() => block.querySelector('[role="tablist"]'));
+
+      const beforeBtn = element.querySelector('#before');
+      const afterBtn = element.querySelector('#after');
+      const tabs = element.querySelectorAll('[role="tab"]');
+      const [firstTab, secondTab] = tabs;
+
+      // 1. Focus the button before the tabs
+      beforeBtn.focus();
+      expect(document.activeElement).to.equal(beforeBtn);
+
+      // 2. Press Tab to move focus to the first tab
+      await sendKeys({ press: 'Tab' });
+      expect(document.activeElement).to.equal(firstTab);
+
+      // 3. Navigate to the second tab with ArrowRight
+      await sendKeys({ press: 'ArrowRight' });
+      expect(document.activeElement).to.equal(secondTab);
+
+      // 4. Press Tab to move focus to the button after the tabs
+      await sendKeys({ press: 'Tab' });
+      expect(document.activeElement).to.equal(afterBtn);
+
+      // 5. Press Shift+Tab to move back to the second tab
+      await sendKeys({ down: 'Shift' });
+      await sendKeys({ press: 'Tab' });
+      await sendKeys({ up: 'Shift' });
+      expect(document.activeElement).to.equal(secondTab);
     });
   });
 });
