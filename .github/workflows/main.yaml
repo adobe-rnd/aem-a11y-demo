@@ -1,4 +1,4 @@
-name: AEM A11y Demo CI
+name: Build, Lint, Test
 
 on: [push]
 
@@ -6,16 +6,33 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Use Node.js 20
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-    - run: npm ci
+      - name: Install Dependencies
+        run: npm ci
 
-    - run: npm run lint
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
 
-    - name: Run tests
-      run: npm test
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run quality gate (tests, a11y, visuals, performance)
+        run: npm test
+
+      - name: Upload reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failure-reports
+          path: |
+            lighthouse-report.html
+            test/visual/diff/current/
+          if-no-files-found: ignore 
