@@ -34,9 +34,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - name: Install and run audits on baseline
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - name: Run audits on baseline
         run: |
-          npm i axe-cli lhci
           npx axe ${{ needs.setup.outputs.baseline_url }} --save axe-baseline.json || true
           lhci collect --url=${{ needs.setup.outputs.baseline_url }} --config=./lighthouserc.cjs || true
       - name: Upload baseline reports
@@ -109,8 +111,8 @@ jobs:
       - name: Generate consolidated report
         id: generate_report
         if: always()
-        run: node ./.github/generate-a11y-report.js --output-dir ./reports
-        
+        run: node ./scripts/generate-a11y-report.js --output-dir ./reports
+
       - name: Post accessibility summary comment
         if: always() && steps.generate_report.outcome == 'success'
         uses: actions/github-script@v7
@@ -130,3 +132,69 @@ jobs:
             } else {
               console.log('Summary report not found, skipping comment.');
             }
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - run: npm test
+
+      - name: Extract AEM Preview URL from PR
+        id: extract_url
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const prBody = context.payload.pull_request.body;
+            if (!prBody) return '';
+            const urlRegex = /https:\/\/[a-zA-Z0-9-]+--[a-zA-Z0-9-]+--[a-zA-Z0-9-]+\.aem\.(?:live|page)/;
+            const match = prBody.match(urlRegex);
+            return match ? match[0] : '';
+
+      - name: Run AEM preview accessibility audits
+        if: steps.extract_url.outputs.result != ''
+        run: |
+          npx axe ${{ steps.extract_url.outputs.result }} --save axe-report.json || true
+          lhci collect --url=${{ steps.extract_url.outputs.result }} || true
+
+      - name: Generate and post accessibility report
+        if: always() && steps.extract_url.outputs.result != ''
+        run: node ./scripts/generate-a11y-report.js
+        
+      - name: Post accessibility comment to PR
+        if: always() && steps.extract_url.outputs.result != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('a11y-report.md')) {
+              const report = fs.readFileSync('a11y-report.md', 'utf8');
+              github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: report,
+              });
+            }
+
+      - name: Assert AEM preview accessibility scores
+        if: steps.extract_url.outputs.result != ''
+        run: |
+          npx axe ${{ steps.extract_url.outputs.result }} --exit
+          lhci assert
+
+      - name: Upload reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failure-reports
+          path: |
+            lighthouse-report.html
+            axe-report.json
+            test/visual/diff/current/
+          if-no-files-found: ignore 
