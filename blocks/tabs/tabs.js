@@ -66,9 +66,8 @@ function switchTab(newTab) {
 /**
  * Decorates the tabs block with accessibility and functionality.
  * @param {Element} block - The tabs block element.
- * @param {Element} [parentElement=block.parentElement] - The parent element to search for panels.
  */
-export default function decorate(block, parentElement = block.parentElement) {
+export default function decorate(block) {
   const tablistContainer = block.querySelector('div');
   const tablist = document.createElement('div');
   tablist.setAttribute('role', 'tablist');
@@ -88,20 +87,22 @@ export default function decorate(block, parentElement = block.parentElement) {
 
   tabLinks.forEach((link, i) => {
     const tabId = getRandomId('tab');
-    const panelId = link.href ? `${new URL(link.href).hash.substring(1)}-container` : getRandomId('tabpanel');
-    const panel = parentElement.querySelector(`#${panelId}`)?.closest('div') || block.children.item(i + 1);
+    const panelId = link.href ? `${new URL(link.href).hash.substring(1)}` : getRandomId('tabpanel');
+    const panel = block.querySelector(`#${panelId}`)?.closest('div')
+      || block.closest('.section')?.querySelector(`#${panelId}`)?.closest('div')
+      || block.children.item(i + 1);
 
     if (panel) {
       const tab = document.createElement('button');
       tab.id = tabId;
       tab.setAttribute('role', 'tab');
-      tab.setAttribute('aria-controls', panelId);
+      tab.setAttribute('aria-controls', `${panelId}-container`);
       tab.setAttribute('aria-selected', 'false');
       tab.textContent = link.textContent.trim();
       tablist.append(tab);
 
       panel.setAttribute('role', 'tabpanel');
-      panel.setAttribute('id', panelId);
+      panel.setAttribute('id', `${panelId}-container`);
       panel.setAttribute('aria-labelledby', tabId);
       panel.setAttribute('hidden', '');
 

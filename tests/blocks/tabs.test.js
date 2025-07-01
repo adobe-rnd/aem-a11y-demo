@@ -15,14 +15,16 @@ describe('Tabs Block', () => {
         <div>
           <div class="tabs">
             <div>
-              <ul>
-                <li><a href="#panel1">Tab 1</a></li>
-                <li><a href="#panel2">Tab 2</a></li>
-              </ul>
+              <div>
+                <ul>
+                  <li><a href="#panel1">Tab 1</a></li>
+                  <li><a href="#panel2">Tab 2</a></li>
+                </ul>
+              </div>
             </div>
+            <div><div><h3 id="panel1">Panel 1 Content</h3></div></div>
+            <div><div><h3 id="panel2">Panel 2 Content</h3></div></div>
           </div>
-          <div id="panel1">Panel 1 Content</div>
-          <div id="panel2">Panel 2 Content</div>
         </div>
       `);
       block = element.querySelector('.tabs');
@@ -41,20 +43,20 @@ describe('Tabs Block', () => {
     describe('Initial State', () => {
       it('should set the first tab as active by default', () => {
         const firstTab = block.querySelector('[role="tab"]');
-        const firstPanel = document.getElementById('panel1');
+        const firstPanel = document.getElementById('panel1-container');
         expect(firstTab.getAttribute('aria-selected')).to.equal('true');
         expect(firstPanel.hasAttribute('hidden')).to.be.false;
       });
 
       it('should hide other panels by default', () => {
-        const secondPanel = document.getElementById('panel2');
+        const secondPanel = document.getElementById('panel2-container');
         expect(secondPanel.hasAttribute('hidden')).to.be.true;
       });
 
       it('should assign correct ARIA attributes', () => {
         const tab = block.querySelector('[role="tab"]');
-        const panel = document.getElementById('panel1');
-        expect(tab.getAttribute('aria-controls')).to.equal('panel1');
+        const panel = document.getElementById('panel1-container');
+        expect(tab.getAttribute('aria-controls')).to.equal('panel1-container');
         expect(panel.getAttribute('aria-labelledby')).to.equal(tab.id);
       });
     });
@@ -64,8 +66,8 @@ describe('Tabs Block', () => {
         const secondTab = block.querySelectorAll('[role="tab"]')[1];
         secondTab.click();
         const firstTab = block.querySelector('[role="tab"]');
-        const firstPanel = document.getElementById('panel1');
-        const secondPanel = document.getElementById('panel2');
+        const firstPanel = document.getElementById('panel1-container');
+        const secondPanel = document.getElementById('panel2-container');
         expect(firstTab.getAttribute('aria-selected')).to.equal('false');
         expect(secondTab.getAttribute('aria-selected')).to.equal('true');
         expect(firstPanel.hasAttribute('hidden')).to.be.true;
@@ -122,14 +124,16 @@ describe('Tabs Block', () => {
         <div>
           <div class="tabs manual">
             <div>
-              <ul>
-                <li><a href="#panel1">Static</a></li>
-                <li><a href="#panel2">Async</a></li>
-              </ul>
+              <div>
+                <ul>
+                  <li><a href="#panel1">Static</a></li>
+                  <li><a href="#panel2">Async</a></li>
+                </ul>
+              </div>
             </div>
+            <div><div><h3 id="panel1">Static Content</h3></div></div>
+            <div><div><a id="panel2" href="/tests/fixtures/contact.plain.html"></a></div></div>
           </div>
-          <div id="panel1">Static Content</div>
-          <div id="panel2"><a href="/tests/fixtures/contact.plain.html"></a></div>
         </div>
       `);
       block = element.querySelector('.tabs');
@@ -155,7 +159,7 @@ describe('Tabs Block', () => {
 
     it('should load content asynchronously', async () => {
       const secondTab = block.querySelectorAll('[role="tab"]')[1];
-      const panel = document.getElementById('panel2');
+      const panel = document.getElementById('panel2-container');
       expect(panel.getAttribute('aria-busy')).to.equal('false');
       expect(panel.getAttribute('aria-live')).to.equal('polite');
       secondTab.click();
