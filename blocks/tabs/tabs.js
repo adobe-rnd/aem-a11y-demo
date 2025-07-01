@@ -1,4 +1,4 @@
-import { getRandomId } from '../../scripts/a11y-core.js';
+import { getRandomId, getItemForKeyEvent } from '../../scripts/a11y-core.js';
 
 const originalPanelLinks = {};
 
@@ -53,8 +53,6 @@ function switchTab(newTab) {
           const originalLink = originalPanelLinks[dataSource];
           if (originalLink) {
             newPanel.append(originalLink);
-          } else {
-            newPanel.textContent = 'Error loading content.';
           }
           newPanel.removeAttribute('aria-busy');
           newPanel.removeAttribute('aria-live');
@@ -131,31 +129,10 @@ export default function decorate(block) {
 
   tablist.addEventListener('keydown', (e) => {
     const isManual = e.currentTarget.closest('.tabs.manual');
-    let newTab;
+    const items = [...e.currentTarget.querySelectorAll('[role="tab"]')];
+    const newTab = getItemForKeyEvent(e, items);
 
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      const tabs = [...e.currentTarget.querySelectorAll('[role="tab"]')];
-      const currentTab = e.target;
-      const tabIndex = tabs.indexOf(currentTab);
-      newTab = tabs[(tabIndex + 1) % tabs.length];
-      newTab.focus();
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      const tabs = [...e.currentTarget.querySelectorAll('[role="tab"]')];
-      const currentTab = e.target;
-      const tabIndex = tabs.indexOf(currentTab);
-      newTab = tabs[(tabIndex - 1 + tabs.length) % tabs.length];
-      newTab.focus();
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      newTab = e.currentTarget.querySelector('[role="tab"]');
-      newTab.focus();
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      newTab = e.currentTarget.querySelector('[role="tab"]:last-of-type');
-      newTab.focus();
-    }
-
-    if (!isManual && newTab) {
+    if (newTab && !isManual) {
       switchTab(newTab);
     }
 

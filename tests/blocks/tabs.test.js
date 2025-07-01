@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-unused-expressions */
 import {
   html,
@@ -222,6 +223,48 @@ describe('Tabs Block', () => {
       await sendKeys({ press: 'Tab' });
       await sendKeys({ up: 'Shift' });
       expect(document.activeElement).to.equal(secondTab);
+    });
+  });
+
+  describe('Async Content', () => {
+    it('should restore the original link on a 404 error', async () => {
+      const element = await fixture(html`
+        <div>
+          <div class="tabs">
+            <div>
+              <ul>
+                <li><a href="#panel1">Static</a></li>
+                <li><a href="#panel-404">Async (404)</a></li>
+              </ul>
+            </div>
+          </div>
+          <div id="panel1">Panel 1</div>
+          <div id="panel-404">
+            <a href="/this/path/will/404.plain.html">Link to 404</a>
+          </div>
+        </div>
+      `);
+
+      const panel = element.querySelector('#panel-404');
+      const originalLink = panel.querySelector('a').cloneNode(true);
+
+      const block = element.querySelector('.tabs');
+      decorate(block);
+      await waitUntil(() => block.querySelector('[role="tablist"]'));
+
+      const tabs = element.querySelectorAll('[role="tab"]');
+      const asyncTab = tabs[1];
+
+      // Click the tab to trigger the fetch
+      asyncTab.click();
+
+      // Wait until the fallback link is restored in the panel
+      await waitUntil(() => panel.querySelector('a'));
+
+      const restoredLink = panel.querySelector('a');
+      expect(restoredLink).to.exist;
+      expect(restoredLink.href).to.equal(originalLink.href);
+      expect(restoredLink.textContent).to.equal(originalLink.textContent);
     });
   });
 });

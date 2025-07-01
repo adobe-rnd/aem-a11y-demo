@@ -1,27 +1,34 @@
 /**
- * Handles keyboard navigation for accessible components like tabs and accordions.
+ * Handles roving tabindex for keyboard navigation on a list of items.
  * @param {KeyboardEvent} e - The keyboard event.
- * @param {Function} activateItem - The function to call to activate an item.
+ * @param {HTMLElement[]} items - The items to navigate through.
+ * @returns {HTMLElement|null} The new item that should be focused, or null.
  */
 // eslint-disable-next-line import/prefer-default-export
-export function handleKeyboardNavigation(e, activateItem) {
-  const items = [...e.currentTarget.querySelectorAll('[role="tab"], [role="button"]')];
+export function getItemForKeyEvent(e, items) {
   const currentItem = e.target;
-  let itemIndex = items.indexOf(currentItem);
+  const itemIndex = items.indexOf(currentItem);
+  let newItem = null;
 
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-    itemIndex = (itemIndex + 1) % items.length;
-    activateItem(items[itemIndex]);
+    newItem = items[(itemIndex + 1) % items.length];
   } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-    itemIndex = (itemIndex - 1 + items.length) % items.length;
-    activateItem(items[itemIndex]);
+    newItem = items[(itemIndex - 1 + items.length) % items.length];
   } else if (e.key === 'Home') {
     e.preventDefault();
-    activateItem(items[0]);
+    [newItem] = items;
   } else if (e.key === 'End') {
     e.preventDefault();
-    activateItem(items[items.length - 1]);
+    newItem = items[items.length - 1];
   }
+
+  if (newItem) {
+    currentItem.setAttribute('tabindex', '-1');
+    newItem.setAttribute('tabindex', '0');
+    newItem.focus();
+  }
+
+  return newItem;
 }
 
 /**

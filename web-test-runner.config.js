@@ -46,6 +46,7 @@ export default {
   coverageConfig: {
     include: [
       'blocks/tabs/**/*.js',
+      'scripts/**/a11y-*.js',
     ],
     report: true,
     reportDir: 'coverage',
