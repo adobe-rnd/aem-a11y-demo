@@ -54,12 +54,12 @@ jobs:
     if: needs.setup.outputs.has_pairs == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Chrome
-        uses: browser-actions/setup-chrome@v1
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '20', cache: 'npm' }
       - run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
 
       - name: Run audits for all URL pairs
         id: run_audits
@@ -70,11 +70,9 @@ jobs:
             const urlPairs = JSON.parse(process.env.URL_PAIRS);
             const reportDir = "./reports/all";
             if (!fs.existsSync(reportDir)) fs.mkdirSync(reportDir, { recursive: true });
-            if (!fs.existsSync(".lighthouseci")) fs.mkdirSync(".lighthouseci"); 
 
             function runAudit(url, type, slug) {
               if (!url || !type || !slug) {
-                // This is expected if a candidate has no corresponding baseline
                 return;
               }
               console.log(`Auditing ${url} (type: ${type}, slug: ${slug})`);
@@ -82,10 +80,9 @@ jobs:
               const lhrFile = `${reportDir}/lhr-${type}-${slug}.json`;
 
               try {
-                // Use Playwrights browser to avoid version mismatch issues
-                execSync(`npx axe ${url} --save ${axeFile} --browser=playwright`, { stdio: "inherit" });
+                execSync(`node ./.github/run-axe.js --url ${url} --output ${axeFile}`, { stdio: "inherit" });
               } catch (e) {
-                console.warn(`Axe audit for ${url} completed with issues or failed.`);
+                console.warn(`Axe audit for ${url} failed to execute.`);
               }
 
               try {
@@ -101,9 +98,7 @@ jobs:
 
             for (const pair of urlPairs) {
               if (!pair.candidate) continue;
-              // Sanitize the path to create a valid filename slug
               const slug = new URL(pair.candidate).pathname.replace(/[^a-zA-Z0-9]/g, "_");
-              
               runAudit(pair.candidate, "candidate", slug);
               runAudit(pair.baseline, "baseline", slug);
             }

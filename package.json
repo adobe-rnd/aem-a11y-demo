@@ -52,7 +52,8 @@
     "stylelint-config-standard": "38.0.0",
     "jsdom": "^24.1.0",
     "lighthouse": "^12.1.0",
-    "sinon": "^18.0.0"
+    "sinon": "^18.0.0",
+    "axe-playwright": "^2.0.1"
   },
   "directories": {
     "test": "tests"
