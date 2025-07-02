@@ -8,109 +8,116 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      baseline_url: ${{ steps.extract_urls.outputs.baseline_url }}
-      candidate_urls: ${{ steps.extract_urls.outputs.candidate_urls }}
+      url_pairs: ${{ steps.extract_urls.outputs.url_pairs }}
+      has_pairs: ${{ steps.extract_urls.outputs.has_pairs }}
     steps:
-      - name: Extract AEM Preview URLs
+      - name: Extract and Pair AEM Preview URLs
         id: extract_urls
         uses: actions/github-script@v7
         with:
           script: |
             const prBody = context.payload.pull_request.body || '';
-            const urlRegex = /https:\/\/[a-zA-Z0-9-]+--[a-zA-Z0-9-]+--[a-zA-Z0-9-]+\.aem\.(?:live|page)/g;
+            const urlRegex = /https:\/\/[a-zA-Z0-9-]+--[a-zA-Z0-9-]+--[a-zA-Z0-9-]+\.aem\.(?:live|page)[^\s<]*/g;
             const matches = [...new Set(prBody.match(urlRegex) || [])];
             
-            const baselineUrl = matches.find(url => url.startsWith('https://main--')) || '';
-            const candidateUrls = matches.filter(url => !url.startsWith('https://main--'));
+            const mainUrls = matches.filter(url => url.includes('--main--'));
+            const candidateUrls = matches.filter(url => !url.includes('--main--'));
 
-            console.log(`Baseline URL: ${baselineUrl}`);
-            console.log(`Candidate URLs: ${candidateUrls.join(', ')}`);
+            const mainUrlMap = new Map(mainUrls.map(url => {
+              try {
+                return [new URL(url).pathname, url];
+              } catch (e) {
+                console.warn(`Invalid baseline URL skipped: ${url}`);
+                return [null, null];
+              }
+            }).filter(p => p[0]));
 
-            core.setOutput('baseline_url', baselineUrl);
-            core.setOutput('candidate_urls', JSON.stringify(candidateUrls));
+            const urlPairs = candidateUrls.map(candidateUrl => {
+              try {
+                const path = new URL(candidateUrl).pathname;
+                return {
+                  candidate: candidateUrl,
+                  baseline: mainUrlMap.get(path) || '',
+                };
+              } catch(e) {
+                console.warn(`Invalid candidate URL skipped: ${candidateUrl}`);
+                return null;
+              }
+            }).filter(p => p);
 
-  audit_baseline:
-    if: needs.setup.outputs.baseline_url != ''
+            console.log('URL Pairs:', JSON.stringify(urlPairs, null, 2));
+            core.setOutput('url_pairs', JSON.stringify(urlPairs));
+            core.setOutput('has_pairs', urlPairs.length > 0);
+
+  run_audits_and_report:
     needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install and run audits on baseline
-        run: |
-          npm i axe-cli lhci
-          npx axe ${{ needs.setup.outputs.baseline_url }} --save axe-baseline.json || true
-          lhci collect --url=${{ needs.setup.outputs.baseline_url }} --config=./lighthouserc.cjs || true
-      - name: Upload baseline reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: baseline-reports
-          path: |
-            axe-baseline.json
-            .lighthouseci/lhr-*.json
-
-  audit_candidate:
-    needs: [setup, audit_baseline]
-    if: fromJson(needs.setup.outputs.candidate_urls)[0] != null
+    if: needs.setup.outputs.has_pairs == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
 
-      - name: Download baseline reports
-        if: needs.audit_baseline.result == 'success'
-        uses: actions/download-artifact@v4
-        with:
-          name: baseline-reports
-          path: ./reports/baseline
-
-      - name: Run audits for all candidate URLs
+      - name: Run audits for all URL pairs
         id: run_audits
         run: |
           node -e '
             const fs = require("fs");
             const { execSync } = require("child_process");
-            const urls = JSON.parse(process.env.CANDIDATE_URLS);
-            const reportDir = "./reports/candidate";
+            const urlPairs = JSON.parse(process.env.URL_PAIRS);
+            const reportDir = "./reports/all";
             if (!fs.existsSync(reportDir)) fs.mkdirSync(reportDir, { recursive: true });
-            if (!fs.existsSync(".lighthouseci")) fs.mkdirSync(".lighthouseci");
 
-            for (const url of urls) {
-              console.log(`Auditing ${url}...`);
-              const slug = url.replace(/[^a-zA-Z0-9]/g, "_");
-              
+            function runAudit(url, type, slug) {
+              if (!url || !type || !slug) {
+                return;
+              }
+              console.log(`Auditing ${url} (type: ${type}, slug: ${slug})`);
+              const axeFile = `${reportDir}/axe-${type}-${slug}.json`;
+              const lhrFile = `${reportDir}/lhr-${type}-${slug}.json`;
+
               try {
-                execSync(`npx axe ${url} --save ${reportDir}/axe-${slug}.json`, { stdio: "inherit" });
+                execSync(`node ./.github/run-axe.cjs --url ${url} --output ${axeFile}`, { stdio: "inherit" });
               } catch (e) {
-                console.warn(`Axe audit for ${url} completed with issues or failed.`);
+                console.warn(`Axe audit for ${url} failed to execute.`);
               }
 
               try {
-                execSync(`lhci collect --url=${url} --config=./lighthouserc.cjs`, { stdio: "inherit" });
-                const lhrFile = fs.readdirSync(".lighthouseci").find(f => f.startsWith("lhr-"));
-                if (lhrFile) {
-                   fs.renameSync(`.lighthouseci/${lhrFile}`, `${reportDir}/lhr-${slug}.json`);
+                execSync(`npx lhci collect --url=${url} --config=./lighthouserc.cjs`, { stdio: "inherit" });
+                const tempLhr = fs.readdirSync(".lighthouseci").find(f => f.startsWith("lhr-"));
+                if (tempLhr) {
+                    fs.renameSync(`.lighthouseci/${tempLhr}`, lhrFile);
                 }
               } catch (e) {
                 console.warn(`Lighthouse audit failed for ${url}.`);
               }
             }
+
+            for (const pair of urlPairs) {
+              if (!pair.candidate) continue;
+              const slug = new URL(pair.candidate).pathname.replace(/[^a-zA-Z0-9]/g, "_");
+              runAudit(pair.candidate, "candidate", slug);
+              runAudit(pair.baseline, "baseline", slug);
+            }
           '
         env:
-          CANDIDATE_URLS: ${{ needs.setup.outputs.candidate_urls }}
+          URL_PAIRS: ${{ needs.setup.outputs.url_pairs }}
 
-      - name: Upload candidate reports as artifacts
+      - name: Upload all reports as artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: candidate-reports
-          path: ./reports/candidate/
+          name: all-reports
+          path: ./reports/all/
 
       - name: Generate consolidated report
         id: generate_report
         if: always()
-        run: node ./.github/generate-a11y-report.js --output-dir ./reports
-        
+        run: node ./.github/generate-a11y-report.js --reports-dir ./reports/all --output-file ./reports/summary.md
+
       - name: Post accessibility summary comment
         if: always() && steps.generate_report.outcome == 'success'
         uses: actions/github-script@v7
@@ -128,5 +135,5 @@ jobs:
                 body: report,
               });
             } else {
-              console.log('Summary report not found, skipping comment.');
+              console.log("Summary report not found, skipping comment.");
             }
