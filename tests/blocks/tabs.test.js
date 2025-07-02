@@ -134,8 +134,8 @@ describe('Tabs Block', () => {
                 </ul>
               </div>
             </div>
-            <div><div><h3>Static Content</h3></div></div>
-            <div><div><a href="/tests/fixtures/contact.plain.html">/tests/fixtures/contact.plain.html</a></div></div>
+            <div><div>Static Content</div></div>
+            <div><div><a href="/tests/fixtures/contact.plain.html"></a></div></div>
           </div>
         </div>
       `);
@@ -172,6 +172,14 @@ describe('Tabs Block', () => {
       expect(panel.getAttribute('aria-busy')).to.be.null;
       expect(panel.getAttribute('aria-live')).to.be.null;
       expect(panel.textContent).to.include('Contact Us');
+    });
+
+    it('decorates the block quickly', async () => {
+      const startTime = performance.now();
+      decorate(block);
+      await waitUntil(() => block.querySelector('[role="tablist"]'));
+      const elapsedTime = performance.now() - startTime;
+      expect(elapsedTime).to.be.below(100);
     });
   });
 
