@@ -26,7 +26,7 @@
   "license": "ISC",
   "devDependencies": {
     "@babel/eslint-parser": "7.27.5",
-    "@lhci/cli": "^0.13.0",
+    "@lhci/cli": "^0.15.1",
     "@open-wc/testing": "^4.0.0",
     "@playwright/test": "^1.45.1",
     "@rollup/plugin-commonjs": "^28.0.6",
@@ -65,8 +65,5 @@
   "bugs": {
     "url": "https://github.com/adobe-rnd/aem-a11y-demo/issues"
   },
-  "homepage": "https://github.com/adobe-rnd/aem-a11y-demo#readme",
-  "dependencies": {
-    "dotenv": "^16.4.5"
-  }
+  "homepage": "https://github.com/adobe-rnd/aem-a11y-demo#readme"
 }
