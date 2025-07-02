@@ -82,6 +82,10 @@ async function loadFonts() {
  */
 function buildAutoBlocks(main) {
   try {
+    // Inline images are not likely decorative, so we remove the alt attribute.
+    main.querySelectorAll(':scope > div > p > picture > img').forEach((img) => {
+      img.removeAttribute('alt');
+    });
     buildHeroBlock(main);
   } catch (error) {
     // eslint-disable-next-line no-console
