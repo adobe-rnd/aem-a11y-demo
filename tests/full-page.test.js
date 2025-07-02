@@ -11,9 +11,9 @@ async function getTabsFixture() {
   if (!response.ok) {
     throw new Error('Failed to fetch fixture');
   }
-  wrapper.innerHTML = await response.text();
-  const element = wrapper.firstElementChild;
-  await decorate(element.querySelector('.tabs'), element);
+  const fragment = new DOMParser().parseFromString(await response.text(), 'text/html');
+  wrapper.append(fragment.querySelector('main'));
+  await decorate(wrapper.querySelector('.tabs'));
   return wrapper;
 }
 

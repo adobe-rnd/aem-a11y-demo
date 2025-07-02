@@ -1,31 +1,49 @@
-<div>
-  <div class="tabs">
-    <div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Tabs Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="nav" content="/tests/fixtures/nav">
+  <meta name="footer" content="/tests/fixtures/footer">
+  <script src="../../scripts/aem.js" type="module"></script>
+  <script src="../../scripts/scripts.js" type="module"></script>
+  <link rel="stylesheet" href="../../styles/styles.css" />
+</head>
+<body>
+  <header></header>
+  <main>
+    <div class="section">
+      <div class="tabs">
+        <div>
+          <div>
+            <ul>
+              <li><a href="#tab-1">Tab 1</a></li>
+              <li><a href="#tab-2">Tab 2</a></li>
+              <li><a href="#tab-3">Tab 3</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
       <div>
-        <ul>
-          <li><a href="#tab-1">Tab 1</a></li>
-          <li><a href="#tab-2">Tab 2</a></li>
-          <li><a href="#tab-3">Tab 3</a></li>
-        </ul>
+        <div>
+          <h2 id="tab-1">Tab 1 Content</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+        </div>
+      </div>
+      <div>
+        <div>
+          <h2 id="tab-2">Tab 2 Content</h2>
+          <p>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        </div>
+      </div>
+      <div>
+        <div>
+          <h2 id="tab-3">Tab 3 Content</h2>
+          <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        </div>
       </div>
     </div>
-  </div>
-  <div id="tab-1">
-    <div>
-      <h2>Tab 1 Content</h2>
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-    </div>
-  </div>
-  <div id="tab-2">
-    <div>
-      <h2>Tab 2 Content</h2>
-      <p>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-    </div>
-  </div>
-  <div id="tab-3">
-    <div>
-      <h2>Tab 3 Content</h2>
-      <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-    </div>
-  </div>
-</div> 
+  </main>
+  <footer></footer>
+</body>
+</html>

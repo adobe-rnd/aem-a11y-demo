@@ -1,4 +1,4 @@
-import { getRandomId } from '../../scripts/a11y-core.js';
+import { getRandomId, getItemForKeyEvent } from '../../scripts/a11y-core.js';
 
 const originalPanelLinks = {};
 
@@ -12,6 +12,7 @@ function switchTab(newTab) {
 
   if (oldTab) {
     oldTab.setAttribute('aria-selected', 'false');
+    oldTab.setAttribute('tabindex', '-1');
     const oldPanel = document.querySelector(`#${oldTab.getAttribute('aria-controls')}`);
     if (oldPanel) {
       oldPanel.setAttribute('hidden', '');
@@ -19,6 +20,7 @@ function switchTab(newTab) {
   }
 
   newTab.setAttribute('aria-selected', 'true');
+  newTab.setAttribute('tabindex', '0');
   const newPanel = document.querySelector(`#${newTab.getAttribute('aria-controls')}`);
   if (newPanel) {
     newPanel.removeAttribute('hidden');
@@ -51,8 +53,6 @@ function switchTab(newTab) {
           const originalLink = originalPanelLinks[dataSource];
           if (originalLink) {
             newPanel.append(originalLink);
-          } else {
-            newPanel.textContent = 'Error loading content.';
           }
           newPanel.removeAttribute('aria-busy');
           newPanel.removeAttribute('aria-live');
@@ -66,9 +66,8 @@ function switchTab(newTab) {
 /**
  * Decorates the tabs block with accessibility and functionality.
  * @param {Element} block - The tabs block element.
- * @param {Element} [parentElement=block.parentElement] - The parent element to search for panels.
  */
-export default function decorate(block, parentElement = block.parentElement) {
+export default function decorate(block) {
   const tablistContainer = block.querySelector('div');
   const tablist = document.createElement('div');
   tablist.setAttribute('role', 'tablist');
@@ -88,19 +87,23 @@ export default function decorate(block, parentElement = block.parentElement) {
 
   tabLinks.forEach((link, i) => {
     const tabId = getRandomId('tab');
-    const panelId = link.href ? `${new URL(link.href).hash.substring(1)}-container` : getRandomId('tabpanel');
-    const panel = parentElement.querySelector(`#${panelId}`)?.closest('div') || block.children.item(i + 1);
+    const panelId = link.href ? `${new URL(link.href).hash.substring(1)}` : getRandomId('tabpanel');
+    const panel = block.querySelector(`#${panelId}`)?.closest('div')
+      || block.closest('.section')?.querySelector(`#${panelId}`)?.closest('div')
+      || block.parentElement.closest('div')?.querySelector(`#${panelId}`)?.closest('div')
+      || block.children.item(i + 1);
 
     if (panel) {
       const tab = document.createElement('button');
       tab.id = tabId;
-      tab.setAttribute('aria-controls', panelId);
+      tab.setAttribute('aria-controls', `${panelId}-container`);
       tab.setAttribute('aria-selected', 'false');
+      tab.setAttribute('tabindex', '-1');
       tab.textContent = link.textContent.trim();
       tablist.append(tab);
 
       panel.setAttribute('role', 'tabpanel');
-      panel.setAttribute('id', panelId);
+      panel.setAttribute('id', `${panelId}-container`);
       panel.setAttribute('aria-labelledby', tabId);
       panel.setAttribute('hidden', '');
 
@@ -125,31 +128,10 @@ export default function decorate(block, parentElement = block.parentElement) {
 
   tablist.addEventListener('keydown', (e) => {
     const isManual = e.currentTarget.closest('.tabs.manual');
-    let newTab;
+    const items = [...e.currentTarget.querySelectorAll('[role="tab"]')];
+    const newTab = getItemForKeyEvent(e, items);
 
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      const tabs = [...e.currentTarget.querySelectorAll('[role="tab"]')];
-      const currentTab = e.target;
-      const tabIndex = tabs.indexOf(currentTab);
-      newTab = tabs[(tabIndex + 1) % tabs.length];
-      newTab.focus();
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      const tabs = [...e.currentTarget.querySelectorAll('[role="tab"]')];
-      const currentTab = e.target;
-      const tabIndex = tabs.indexOf(currentTab);
-      newTab = tabs[(tabIndex - 1 + tabs.length) % tabs.length];
-      newTab.focus();
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      newTab = e.currentTarget.querySelector('[role="tab"]');
-      newTab.focus();
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      newTab = e.currentTarget.querySelector('[role="tab"]:last-of-type');
-      newTab.focus();
-    }
-
-    if (!isManual && newTab) {
+    if (newTab && !isManual) {
       switchTab(newTab);
     }
 

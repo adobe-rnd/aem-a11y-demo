@@ -1,9 +1,12 @@
+/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-unused-expressions */
 import {
   html,
   fixture,
   expect,
+  waitUntil,
 } from '@open-wc/testing';
+import { sendKeys } from '@web/test-runner-commands';
 import decorate from '../../blocks/tabs/tabs.js';
 
 describe('Tabs Block', () => {
@@ -15,14 +18,16 @@ describe('Tabs Block', () => {
         <div>
           <div class="tabs">
             <div>
-              <ul>
-                <li><a href="#panel1">Tab 1</a></li>
-                <li><a href="#panel2">Tab 2</a></li>
-              </ul>
+              <div>
+                <ul>
+                  <li><a href="#panel1">Tab 1</a></li>
+                  <li><a href="#panel2">Tab 2</a></li>
+                </ul>
+              </div>
             </div>
+            <div><div><h3 id="panel1">Panel 1 Content</h3></div></div>
+            <div><div><h3 id="panel2">Panel 2 Content</h3></div></div>
           </div>
-          <div id="panel1">Panel 1 Content</div>
-          <div id="panel2">Panel 2 Content</div>
         </div>
       `);
       block = element.querySelector('.tabs');
@@ -41,20 +46,20 @@ describe('Tabs Block', () => {
     describe('Initial State', () => {
       it('should set the first tab as active by default', () => {
         const firstTab = block.querySelector('[role="tab"]');
-        const firstPanel = document.getElementById('panel1');
+        const firstPanel = document.getElementById('panel1-container');
         expect(firstTab.getAttribute('aria-selected')).to.equal('true');
         expect(firstPanel.hasAttribute('hidden')).to.be.false;
       });
 
       it('should hide other panels by default', () => {
-        const secondPanel = document.getElementById('panel2');
+        const secondPanel = document.getElementById('panel2-container');
         expect(secondPanel.hasAttribute('hidden')).to.be.true;
       });
 
       it('should assign correct ARIA attributes', () => {
         const tab = block.querySelector('[role="tab"]');
-        const panel = document.getElementById('panel1');
-        expect(tab.getAttribute('aria-controls')).to.equal('panel1');
+        const panel = document.getElementById('panel1-container');
+        expect(tab.getAttribute('aria-controls')).to.equal('panel1-container');
         expect(panel.getAttribute('aria-labelledby')).to.equal(tab.id);
       });
     });
@@ -64,8 +69,8 @@ describe('Tabs Block', () => {
         const secondTab = block.querySelectorAll('[role="tab"]')[1];
         secondTab.click();
         const firstTab = block.querySelector('[role="tab"]');
-        const firstPanel = document.getElementById('panel1');
-        const secondPanel = document.getElementById('panel2');
+        const firstPanel = document.getElementById('panel1-container');
+        const secondPanel = document.getElementById('panel2-container');
         expect(firstTab.getAttribute('aria-selected')).to.equal('false');
         expect(secondTab.getAttribute('aria-selected')).to.equal('true');
         expect(firstPanel.hasAttribute('hidden')).to.be.true;
@@ -122,14 +127,16 @@ describe('Tabs Block', () => {
         <div>
           <div class="tabs manual">
             <div>
-              <ul>
-                <li><a href="#panel1">Static</a></li>
-                <li><a href="#panel2">Async</a></li>
-              </ul>
+              <div>
+                <ul>
+                  <li>Static</li>
+                  <li>Async</li>
+                </ul>
+              </div>
             </div>
+            <div><div>Static Content</div></div>
+            <div><div><a href="/tests/fixtures/contact.plain.html"></a></div></div>
           </div>
-          <div id="panel1">Static Content</div>
-          <div id="panel2"><a href="/tests/fixtures/contact.plain.html"></a></div>
         </div>
       `);
       block = element.querySelector('.tabs');
@@ -155,7 +162,7 @@ describe('Tabs Block', () => {
 
     it('should load content asynchronously', async () => {
       const secondTab = block.querySelectorAll('[role="tab"]')[1];
-      const panel = document.getElementById('panel2');
+      const panel = document.getElementById(secondTab.getAttribute('aria-controls'));
       expect(panel.getAttribute('aria-busy')).to.equal('false');
       expect(panel.getAttribute('aria-live')).to.equal('polite');
       secondTab.click();
@@ -165,6 +172,107 @@ describe('Tabs Block', () => {
       expect(panel.getAttribute('aria-busy')).to.be.null;
       expect(panel.getAttribute('aria-live')).to.be.null;
       expect(panel.textContent).to.include('Contact Us');
+    });
+
+    it('decorates the block quickly', async () => {
+      const startTime = performance.now();
+      decorate(block);
+      await waitUntil(() => block.querySelector('[role="tablist"]'));
+      const elapsedTime = performance.now() - startTime;
+      expect(elapsedTime).to.be.below(100);
+    });
+  });
+
+  describe('Roving Tabindex', () => {
+    it('should allow tabbing into and out of the tablist', async () => {
+      const element = await fixture(html`
+        <div>
+          <button id="before">Before</button>
+          <div class="tabs">
+            <div>
+              <div>
+                <p>Tab 1</p>
+                <p>Tab 2</p>
+              </div>
+            </div>
+            <div><div>Panel 1</div></div>
+            <div><div>Panel 2</div></div>
+          </div>
+          <button id="after">After</button>
+        </div>
+      `);
+      const block = element.querySelector('.tabs');
+      decorate(block);
+      await waitUntil(() => block.querySelector('[role="tablist"]'));
+
+      const beforeBtn = element.querySelector('#before');
+      const afterBtn = element.querySelector('#after');
+      const tabs = element.querySelectorAll('[role="tab"]');
+      const [firstTab, secondTab] = tabs;
+
+      // 1. Focus the button before the tabs
+      beforeBtn.focus();
+      expect(document.activeElement).to.equal(beforeBtn);
+
+      // 2. Press Tab to move focus to the first tab
+      await sendKeys({ press: 'Tab' });
+      expect(document.activeElement).to.equal(firstTab);
+
+      // 3. Navigate to the second tab with ArrowRight
+      await sendKeys({ press: 'ArrowRight' });
+      expect(document.activeElement).to.equal(secondTab);
+
+      // 4. Press Tab to move focus to the button after the tabs
+      await sendKeys({ press: 'Tab' });
+      expect(document.activeElement).to.equal(afterBtn);
+
+      // 5. Press Shift+Tab to move back to the second tab
+      await sendKeys({ down: 'Shift' });
+      await sendKeys({ press: 'Tab' });
+      await sendKeys({ up: 'Shift' });
+      expect(document.activeElement).to.equal(secondTab);
+    });
+  });
+
+  describe('Async Content', () => {
+    it('should restore the original link on a 404 error', async () => {
+      const element = await fixture(html`
+        <div>
+          <div class="tabs">
+            <div>
+              <ul>
+                <li><a href="#panel1">Static</a></li>
+                <li><a href="#panel-404">Async (404)</a></li>
+              </ul>
+            </div>
+          </div>
+          <div id="panel1">Panel 1</div>
+          <div id="panel-404">
+            <a href="/this/path/will/404.plain.html">Link to 404</a>
+          </div>
+        </div>
+      `);
+
+      const panel = element.querySelector('#panel-404');
+      const originalLink = panel.querySelector('a').cloneNode(true);
+
+      const block = element.querySelector('.tabs');
+      decorate(block);
+      await waitUntil(() => block.querySelector('[role="tablist"]'));
+
+      const tabs = element.querySelectorAll('[role="tab"]');
+      const asyncTab = tabs[1];
+
+      // Click the tab to trigger the fetch
+      asyncTab.click();
+
+      // Wait until the fallback link is restored in the panel
+      await waitUntil(() => panel.querySelector('a'));
+
+      const restoredLink = panel.querySelector('a');
+      expect(restoredLink).to.exist;
+      expect(restoredLink.href).to.equal(originalLink.href);
+      expect(restoredLink.textContent).to.equal(originalLink.textContent);
     });
   });
 });
