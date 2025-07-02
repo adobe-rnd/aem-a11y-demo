@@ -142,8 +142,20 @@ export default function decorate(block) {
     }
   });
 
-  const firstTab = tablist.querySelector('[role="tab"]');
-  if (firstTab) {
-    switchTab(firstTab);
+  let tabToActivate = tablist.querySelector('[role="tab"]');
+  const { hash } = window.location;
+  if (hash) {
+    const hashId = hash.substring(1);
+    const targetPanel = block.querySelector(`[id^="${hashId}"]`)?.closest('[role="tabpanel"]');
+    if (targetPanel) {
+      const targetTab = tablist.querySelector(`[aria-controls="${targetPanel.id}"]`);
+      if (targetTab) {
+        tabToActivate = targetTab;
+      }
+    }
+  }
+
+  if (tabToActivate) {
+    switchTab(tabToActivate);
   }
 }

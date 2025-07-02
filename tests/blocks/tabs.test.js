@@ -275,4 +275,41 @@ describe('Tabs Block', () => {
       expect(restoredLink.textContent).to.equal(originalLink.textContent);
     });
   });
+
+  describe('Deep Linking', () => {
+    it('should activate the correct tab based on the URL hash', async () => {
+      window.location.hash = '#panel2-content';
+
+      const element = await fixture(html`
+        <div>
+          <div class="tabs">
+            <div>
+              <ul>
+                <li><a href="#panel1">Tab 1</a></li>
+                <li><a href="#panel2">Tab 2</a></li>
+              </ul>
+            </div>
+          </div>
+          <div id="panel1">
+            <h3 id="panel1-content">Panel 1</h3>
+          </div>
+          <div id="panel2">
+            <h3 id="panel2-content">Panel 2</h3>
+          </div>
+        </div>
+      `);
+
+      const block = element.querySelector('.tabs');
+      await decorate(block);
+
+      const secondTab = element.querySelectorAll('[role="tab"]')[1];
+      const secondPanel = element.querySelector('#panel2-container');
+
+      expect(secondTab.getAttribute('aria-selected')).to.equal('true');
+      expect(secondPanel.hasAttribute('hidden')).to.be.false;
+
+      // Clean up hash for subsequent tests
+      window.location.hash = '';
+    });
+  });
 });
