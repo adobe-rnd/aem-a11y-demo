@@ -130,6 +130,9 @@ function calculateAxeScore(violations = []) {
  * @param {String} outputFile Path to write the final summary markdown file.
  */
 function main(reportsDir, outputFile) {
+  const SCORE_REGRESSION_THRESHOLD = parseInt(process.env.SCORE_REGRESSION_THRESHOLD || '0', 10);
+  const NEW_ISSUES_THRESHOLD = parseInt(process.env.NEW_ISSUES_THRESHOLD || '0', 10);
+
   if (!reportsDir || !outputFile) {
     console.error('Error: --reports-dir and --output-file arguments are required.');
     process.exit(1);
@@ -198,15 +201,15 @@ function main(reportsDir, outputFile) {
     let detailForUrl = '';
 
     if (hasBaseline) {
-      const lhBaselineScore = Math.round((baselineLhReport.categories.accessibility.score || 0) * 100);
+      const lhBaselineScore = Math.round((baselineLhr.categories.accessibility.score || 0) * 100);
       const lhScoreDiff = lhScore - lhBaselineScore;
-      if (lhScoreDiff < 0) hasRegressions = true;
+      if (lhScoreDiff < SCORE_REGRESSION_THRESHOLD) hasRegressions = true;
       scoreCell = `${lhScore}/100 (${getScoreChangeEmoji(lhScoreDiff)} ${lhScoreDiff > 0 ? `+${lhScoreDiff}` : lhScoreDiff})`;
 
       const baselineAxeViolations = (baselineAxe[0]?.violations) || [];
       const { new: newAxe, fixed: fixedAxe } = diffViolations(baselineAxeViolations, axeViolations);
       
-      if (newAxe.length > 0) {
+      if (newAxe.length > NEW_ISSUES_THRESHOLD) {
         hasRegressions = true;
         hasNewIssues = true;
       }
