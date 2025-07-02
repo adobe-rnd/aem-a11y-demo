@@ -1,0 +1,11 @@
+{
+  "project": "AEM A11y Demo",
+  "plugins": [
+    {
+      "id": "a11y-inspector",
+      "title": "A11y Inspector",
+      "event": "a11y-inspector-run",
+      "environments": ["preview", "live"]
+    }
+  ]
+} 

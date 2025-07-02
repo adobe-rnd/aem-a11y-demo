@@ -160,6 +160,13 @@ async function loadPage() {
   await loadEager(document);
   await loadLazy(document);
   loadDelayed();
+
+  // Sidekick event listener for the A11y Inspector
+  document.addEventListener('sidekick-ready', async () => {
+    const { default: runAudit } = await import('../tools/a11y/a11y.js');
+    const sk = document.querySelector('aem-sidekick');
+    sk.addEventListener('custom:a11y-inspector-run', runAudit);
+  }, { once: true });
 }
 
 loadPage();
