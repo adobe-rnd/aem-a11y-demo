@@ -5,7 +5,7 @@
       "id": "a11y-inspector",
       "title": "A11y Inspector",
       "event": "a11y-inspector-run",
-      "environments": ["preview", "live"]
+      "environments": ["development","preview", "live"]
     }
   ]
 } 

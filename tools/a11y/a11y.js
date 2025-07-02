@@ -53,7 +53,9 @@ export default async function runAudit() {
     const axe = (await import('https://esm.sh/axe-core')).default;
     const results = await axe.run(document, {
       resultTypes: ['violations'],
-      // Add any specific rules or configurations here
+      exclude: [
+        ['aem-sidekick'],
+      ],
     });
 
     if (results.violations.length === 0) {
