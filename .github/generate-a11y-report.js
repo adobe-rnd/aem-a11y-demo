@@ -152,8 +152,8 @@ function main(reportsDir, outputFile) {
     reportsBySlug[slug][kind][type] = readJsonFile(path.join(reportsDir, file));
   });
 
-  let summaryTable = '| URL | Accessibility Score | New Issues | Fixed Issues |\\n';
-  summaryTable += '| --- | --- | --- | --- |\\n';
+  let summaryTable = '| URL | Accessibility Score | New Issues | Fixed Issues |\n';
+  summaryTable += '| --- | --- | --- | --- |\n';
   let detailsSection = '';
   let hasRegressions = false;
   let hasNewIssues = false;
@@ -214,16 +214,16 @@ function main(reportsDir, outputFile) {
       newIssuesCell = newAxe.length;
       fixedIssuesCell = fixedAxe.length;
 
-      detailForUrl += `#### New Issues Introduced (${newAxe.length})\\n${formatViolationsList(newAxe)}\\n\\n`;
-      detailForUrl += `#### Issues Fixed (${fixedAxe.length})\\n${formatViolationsList(fixedAxe)}\\n\\n`;
+      detailForUrl += `#### New Issues Introduced (${newAxe.length})\n${formatViolationsList(newAxe)}\n\n`;
+      detailForUrl += `#### Issues Fixed (${fixedAxe.length})\n${formatViolationsList(fixedAxe)}\n\n`;
     } else {
       if (axeViolations.length > 0) hasNewIssues = true;
       newIssuesCell = axeViolations.length;
-      detailForUrl += `#### All Issues Found (${axeViolations.length})\\n${formatViolationsList(axeViolations)}\\n\\n`;
+      detailForUrl += `#### All Issues Found (${axeViolations.length})\n${formatViolationsList(axeViolations)}\n\n`;
     }
     
     if (detailForUrl.trim() !== '') {
-      detailsSection += `<details><summary><strong>${url}</strong></summary>\\n\\n${detailForUrl}</details>\\n`;
+      detailsSection += `<details><summary><strong>${url}</strong></summary>\n\n${detailForUrl}</details>\n`;
     }
     
     const { pathname } = new URL(url);
@@ -231,12 +231,12 @@ function main(reportsDir, outputFile) {
   }
 
   const runUrl = `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-  let finalReport = `## ♿ Accessibility Summary\\n\\n${summaryTable}\\n`;
+  let finalReport = `## ♿ Accessibility Summary\n\n${summaryTable}\n`;
 
   if (hasNewIssues) {
-    finalReport += `<hr>\\n\\n### Detailed Breakdown\\n\\n${detailsSection}\\n\\n`;
+    finalReport += `<hr>\n\n### Detailed Breakdown\n\n${detailsSection}\n\n`;
   } else if (hasBaseline) {
-    finalReport += `\\nNo new issues were introduced. Great job! 👍\\n\\n`;
+    finalReport += `\nNo new issues were introduced. Great job! 👍\n\n`;
   }
 
   finalReport += `__*Full reports are available as [build artifacts](${runUrl}).*__`;
