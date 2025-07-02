@@ -106,9 +106,11 @@ function main() {
     }
   });
 
-  let summaryTable = '| URL | Accessibility Score | New Issues | Fixed Issues |\n';
-  summaryTable += '| --- | --- | --- | --- |\n';
+  let summaryTable = '| URL | Accessibility Score | New Issues | Fixed Issues |\\n';
+  summaryTable += '| --- | --- | --- | --- |\\n';
   let detailsSection = '';
+  let hasRegressions = false;
+  let hasNewIssues = false;
 
   for (const slug in reportsBySlug) {
     const { axe: axeReport, lhr: lhReport } = reportsBySlug[slug];
@@ -122,37 +124,58 @@ function main() {
     let newIssuesCell = hasBaseline ? '0' : 'N/A';
     let fixedIssuesCell = hasBaseline ? '0' : 'N/A';
     
-    let detailForUrl = `<details><summary><strong>${url}</strong></summary>\n\n`;
+    let detailForUrl = '';
 
     if (hasBaseline) {
       const lhBaselineScore = Math.round((baselineLhReport.categories.accessibility.score || 0) * 100);
       const lhScoreDiff = lhScore - lhBaselineScore;
+      if (lhScoreDiff < 0) hasRegressions = true;
       scoreCell = `${lhScore}/100 (${getScoreChangeEmoji(lhScoreDiff)} ${lhScoreDiff > 0 ? `+${lhScoreDiff}` : lhScoreDiff})`;
 
       const baselineAxeViolations = (baselineAxeReport[0]?.violations) || [];
       const { new: newAxe, fixed: fixedAxe } = diffViolations(baselineAxeViolations, axeViolations);
       
+      if (newAxe.length > 0) {
+        hasRegressions = true;
+        hasNewIssues = true;
+      }
+
       newIssuesCell = newAxe.length;
       fixedIssuesCell = fixedAxe.length;
 
-      detailForUrl += `#### New Issues Introduced (${newAxe.length})\n${formatViolationsList(newAxe)}\n\n`;
-      detailForUrl += `#### Issues Fixed (${fixedAxe.length})\n${formatViolationsList(fixedAxe)}\n\n`;
+      detailForUrl += `#### New Issues Introduced (${newAxe.length})\\n${formatViolationsList(newAxe)}\\n\\n`;
+      detailForUrl += `#### Issues Fixed (${fixedAxe.length})\\n${formatViolationsList(fixedAxe)}\\n\\n`;
     } else {
+      if (axeViolations.length > 0) hasNewIssues = true;
       newIssuesCell = axeViolations.length;
-      detailForUrl += `#### All Issues Found (${axeViolations.length})\n${formatViolationsList(axeViolations)}\n\n`;
+      detailForUrl += `#### All Issues Found (${axeViolations.length})\\n${formatViolationsList(axeViolations)}\\n\\n`;
     }
     
-    detailForUrl += `</details>\n`;
+    if (detailForUrl.trim() !== '') {
+      detailsSection += `<details><summary><strong>${url}</strong></summary>\\n\\n${detailForUrl}</details>\\n`;
+    }
     
-    summaryTable += `| [${url.substring(8, 48)}...](${url}) | ${scoreCell} | ${newIssuesCell} | ${fixedIssuesCell} |\n`;
-    detailsSection += detailForUrl;
+    summaryTable += `| [${url.substring(8, 48)}...](${url}) | ${scoreCell} | ${newIssuesCell} | ${fixedIssuesCell} |\\n`;
   }
 
   const runUrl = `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-  let finalReport = `## ♿ Accessibility Summary\n\n${summaryTable}\n<hr>\n\n### Detailed Breakdown\n\n${detailsSection}\n\n---\n*Full reports are available as [build artifacts](${runUrl}).*`;
+  let finalReport = `## ♿ Accessibility Summary\\n\\n${summaryTable}\\n`;
+
+  if (hasNewIssues) {
+    finalReport += `<hr>\\n\\n### Detailed Breakdown\\n\\n${detailsSection}\\n\\n`;
+  } else if (hasBaseline) {
+    finalReport += `\\nNo new issues were introduced. Great job! 👍\\n\\n`;
+  }
+
+  finalReport += `__*Full reports are available as [build artifacts](${runUrl}).*__`;
   
   fs.writeFileSync(OUTPUT_FILE, finalReport, 'utf-8');
   console.log(`Accessibility summary report generated at ${OUTPUT_FILE}`);
+
+  if (hasRegressions) {
+    console.error('Accessibility regressions detected. Failing the check.');
+    process.exit(1);
+  }
 }
 
 main(); 
