@@ -127,13 +127,35 @@ jobs:
             const fs = require('fs');
             const reportPath = './reports/summary.md';
             if (fs.existsSync(reportPath)) {
-              const report = fs.readFileSync(reportPath, 'utf8');
-              github.rest.issues.createComment({
+              const reportContent = fs.readFileSync(reportPath, 'utf8');
+              const marker = '<!-- A11Y_SUMMARY_BOT -->';
+              const body = `${reportContent}\n\n${marker}`;
+
+              const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body: report,
               });
+
+              const existingComment = comments.find(c => c.body.includes(marker));
+
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body,
+                });
+                console.log(`Updated accessibility comment: ${existingComment.html_url}`);
+              } else {
+                const { data: newComment } = await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body,
+                });
+                console.log(`Created new accessibility comment: ${newComment.html_url}`);
+              }
             } else {
-              console.log("Summary report not found, skipping comment.");
+              console.log('Summary report not found, skipping comment.');
             }
