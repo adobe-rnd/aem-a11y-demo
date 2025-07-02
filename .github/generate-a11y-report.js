@@ -251,4 +251,4 @@ function main(reportsDir, outputFile) {
 }
 
 const args = parseArgs();
-main(args['reports-dir'], args['output-file']); 
+main(args['reports-dir'], args['output-file']);
