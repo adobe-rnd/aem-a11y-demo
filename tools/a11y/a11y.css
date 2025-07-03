@@ -5,13 +5,37 @@
   outline-offset: 2px !important;
   position: relative !important;
   cursor: help !important;
-  transition: all 0.2s ease-in-out;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .a11y-inspector-highlight {
+    transition: all 0.2s ease-in-out;
+  }
 }
 
 .a11y-inspector-highlight:hover {
   outline-color: #ff6a00 !important;
   background-color: rgb(255 0 0 / 10%) !important;
 }
+
+.sidekick-empty-component-zero-fix {
+  position: relative;
+  
+  /* A subtle outline to give authors a hint even without hover */
+  outline: 1px dashed rgb(255 0 0 / 50%);
+  outline-offset: -1px;
+}
+  
+.sidekick-empty-component-zero-fix::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+
+  /* Ensure a minimum size for the hover target */
+  min-width: 20px;
+  min-height: 20px;
+  background: transparent;
+} 
 
 .a11y-inspector-tooltip {
   position: fixed;
@@ -27,7 +51,26 @@
   text-align: left;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.2s ease-in-out;
+}
+
+.a11y-inspector-tooltip a {
+  /* Default to WCAG AAA high contrast and make clickable */
+  color: #ADDEFF;
+  pointer-events: auto;
+  text-decoration: underline;
+}
+
+@media (prefers-contrast: no-preference) {
+  /* Lower contrast for users without a preference (WCAG AA) */
+  .a11y-inspector-tooltip a {
+    color: #90cfff;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .a11y-inspector-tooltip {
+    transition: opacity 0.2s ease-in-out;
+  }
 }
 
 .a11y-inspector-highlight:hover .a11y-inspector-tooltip {
@@ -46,9 +89,14 @@
   font-size: 14px;
   z-index: 10001;
   opacity: 0;
-  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
   transform: translateX(50%);
   box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .a11y-inspector-toast {
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  }
 }
 
 .a11y-inspector-toast.show {
@@ -57,9 +105,26 @@
 }
 
 .a11y-inspector-toast.success {
-  background-color: #198754; /* WCAG AA compliant green */
+  background-color: #000;
+  color: #fff;
+  border: 2px solid #0f0; /* Default to WCAG AAA */
 }
 
 .a11y-inspector-toast.error {
-  background-color: #bb2d3b; /* WCAG AA compliant red */
-} 
+  background-color: #000;
+  color: #fff;
+  border: 2px solid #f00; /* Default to WCAG AAA */
+}
+
+/* Lower contrast for users without a preference */
+@media (prefers-contrast: no-preference) {
+  .a11y-inspector-toast.success {
+    background-color: #198754; /* WCAG AA compliant green */
+    border: none;
+  }
+
+  .a11y-inspector-toast.error {
+    background-color: #bb2d3b; /* WCAG AA compliant red */
+    border: none;
+  }
+}

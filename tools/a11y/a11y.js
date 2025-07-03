@@ -12,6 +12,9 @@
 /* eslint-disable no-console, import/no-unresolved */
 
 import { loadCSS } from '../../scripts/aem.js';
+import AEMRules from './aem-rules.js';
+
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * Removes all existing highlights from the page.
@@ -67,10 +70,14 @@ function showToast(message, isSuccess = true) {
     toast.classList.add('show');
   }, 10);
 
-  // Animate out and remove after 3 seconds
+  // Animate out and remove after 5 seconds
   setTimeout(() => {
     toast.classList.remove('show');
-    toast.addEventListener('transitionend', () => toast.remove());
+    if (REDUCED_MOTION) {
+      toast.remove();
+    } else {
+      toast.addEventListener('transitionend', () => toast.remove());
+    }
   }, 5_000);
 }
 
@@ -86,7 +93,7 @@ function applyHighlight(element, violation) {
   tooltip.className = 'a11y-inspector-tooltip';
   tooltip.innerHTML = `
     <strong>${violation.impact.toUpperCase()}:</strong> ${violation.help}
-    <a href="${violation.helpUrl}" target="_blank" rel="noopener noreferrer" style="color: #ADDEFF; pointer-events: auto;">(Learn more)</a>
+    ${violation.helpUrl ? `<a href="${violation.helpUrl}" target="_blank" rel="noopener noreferrer">(Learn more)</a>` : ''}
   `;
 
   let hideTimeout;
@@ -120,7 +127,11 @@ function applyHighlight(element, violation) {
   const hideTooltip = () => {
     window.removeEventListener('scroll', updateTooltipPosition, true);
     tooltip.style.opacity = '0';
-    tooltip.addEventListener('transitionend', onTransitionEnd, { once: true });
+    if (REDUCED_MOTION) {
+      onTransitionEnd();
+    } else {
+      tooltip.addEventListener('transitionend', onTransitionEnd, { once: true });
+    }
   };
 
   const startHideTimer = () => {
@@ -151,19 +162,35 @@ export default async function runAudit() {
     const options = {
       tags: ['wcag2a', 'wcag21a', 'wcag2aa', 'wcag21aa', 'wcag22aa', 'wcag2aaa', 'best-practice'],
       // Exclude the sidekick element and its shadow DOM from the audit
-      // rules: {
-      //   // Enable WCAG 2.2 specific rules
-      //   'target-size': { enabled: true }, // AAA requirement
-      //   'focus-order-semantics': { enabled: true },
-      //   // 'consistent-help': { enabled: true },
-      // },
+      rules: {
+        // Enable WCAG 2.2 specific rules
+        'target-size': { enabled: true }, // AAA requirement
+        'focus-order-semantics': { enabled: true },
+      },
     };
 
     const results = await axe.run(document.body, options);
 
+    // Run custom AEM rules
+    AEMRules.forEach((rule) => {
+      const failingElements = rule.check(document);
+      if (failingElements.length > 0) {
+        results.violations.push({
+          ...rule,
+          nodes: failingElements.map((el) => ({
+            target: [`#${el.id}`], // Assuming elements have IDs for targeting
+            element: el,
+          })),
+        });
+      }
+    });
+
     results.violations = results.violations.filter((violation) => {
+      if (violation.nodes[0]?.element) { // Custom rule
+        return true;
+      }
       violation.nodes = violation.nodes.filter((node) => {
-        node.target = node.target.filter((target) => target[0] !== 'aem-sidekick');
+        node.target = node.target.filter((target) => !document.querySelector(target).closest('aem-sidekick'));
         return node.target.length > 0;
       });
       return violation.nodes.length > 0;
@@ -182,7 +209,7 @@ export default async function runAudit() {
     console.log(`A11y Inspector: Found ${totalViolations} ${violationText}.`);
     results.violations.forEach((violation) => {
       violation.nodes.forEach((node) => {
-        const element = document.querySelector(node.target[0]);
+        const element = node.element || document.querySelector(node.target[0]);
         if (element) {
           applyHighlight(element, violation);
         }
