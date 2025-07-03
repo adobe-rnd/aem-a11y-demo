@@ -48,7 +48,7 @@
     "http-server": "^14.1.1",
     "mocha": "^11.0.0",
     "start-server-and-test": "^2.0.12",
-    "stylelint": "16.21.0",
+    "stylelint": "16.21.1",
     "stylelint-config-standard": "38.0.0",
     "jsdom": "^24.1.0",
     "lighthouse": "^12.1.0",
