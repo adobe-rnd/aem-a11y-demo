@@ -82,6 +82,10 @@ async function loadFonts() {
  */
 function buildAutoBlocks(main) {
   try {
+    // Inline images are not likely decorative, so we remove the alt attribute.
+    main.querySelectorAll(':scope > div > p > picture > img').forEach((img) => {
+      img.removeAttribute('alt');
+    });
     buildHeroBlock(main);
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -160,6 +164,13 @@ async function loadPage() {
   await loadEager(document);
   await loadLazy(document);
   loadDelayed();
+
+  // Sidekick event listener for the A11y Inspector
+  document.addEventListener('sidekick-ready', async () => {
+    const { default: runAudit } = await import('../tools/a11y/a11y.js');
+    const sk = document.querySelector('aem-sidekick');
+    sk.addEventListener('custom:a11y-inspector-run', runAudit);
+  }, { once: true });
 }
 
 loadPage();

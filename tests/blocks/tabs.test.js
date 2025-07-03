@@ -275,4 +275,100 @@ describe('Tabs Block', () => {
       expect(restoredLink.textContent).to.equal(originalLink.textContent);
     });
   });
+
+  describe('Deep Linking', () => {
+    it('should activate the correct tab based on the URL hash', async () => {
+      window.location.hash = '#panel2-content';
+
+      const element = await fixture(html`
+        <div>
+          <div class="tabs">
+            <div>
+              <ul>
+                <li><a href="#panel1">Tab 1</a></li>
+                <li><a href="#panel2">Tab 2</a></li>
+              </ul>
+            </div>
+          </div>
+          <div id="panel1">
+            <h3 id="panel1-content">Panel 1</h3>
+          </div>
+          <div id="panel2">
+            <h3 id="panel2-content">Panel 2</h3>
+          </div>
+        </div>
+      `);
+
+      const block = element.querySelector('.tabs');
+      await decorate(block);
+
+      const secondTab = element.querySelectorAll('[role="tab"]')[1];
+      const secondPanel = element.querySelector('#panel2-container');
+
+      expect(secondTab.getAttribute('aria-selected')).to.equal('true');
+      expect(secondPanel.hasAttribute('hidden')).to.be.false;
+
+      // Clean up hash for subsequent tests
+      window.location.hash = '';
+    });
+  });
+
+  describe('Accessibility Tree', () => {
+    it('should expose correct roles and states in the accessibility tree', async () => {
+      const element = await fixture(html`
+        <div>
+          <div class="tabs">
+            <div>
+              <ul>
+                <li><a href="#panel1">Tab 1</a></li>
+                <li><a href="#panel2">Tab 2</a></li>
+              </ul>
+            </div>
+          </div>
+          <div id="panel1">Panel 1</div>
+          <div id="panel2">Panel 2</div>
+        </div>
+      `);
+
+      const block = element.querySelector('.tabs');
+      await decorate(block);
+
+      if (!window.getComputedAccessibleNode) {
+        // eslint-disable-next-line no-console
+        console.warn('Skipping accessibility tree test: getComputedAccessibleNode() API not available.');
+        return;
+      }
+
+      const [firstTab, secondTab] = element.querySelectorAll('[role="tab"]');
+      const firstPanel = element.querySelector('#panel1-container');
+
+      // Check initial state
+      const firstTabNode = await window.getComputedAccessibleNode(firstTab);
+      expect(firstTabNode.role).to.equal('tab');
+      expect(firstTabNode.selected).to.be.true;
+
+      const secondTabNode = await window.getComputedAccessibleNode(secondTab);
+      expect(secondTabNode.selected).to.be.false;
+
+      // Check that the panel is exposed and correctly labelled by the tab
+      const panelNode = await window.getComputedAccessibleNode(firstPanel);
+      expect(panelNode.role).to.equal('tabpanel');
+      expect(panelNode.name).to.equal('Tab 1');
+
+      // Switch tabs and re-validate
+      secondTab.click();
+      await waitUntil(() => secondTab.getAttribute('aria-selected') === 'true');
+
+      const updatedFirstTabNode = await window.getComputedAccessibleNode(firstTab);
+      const updatedSecondTabNode = await window.getComputedAccessibleNode(secondTab);
+
+      expect(updatedFirstTabNode.selected).to.be.false;
+      expect(updatedSecondTabNode.selected).to.be.true;
+
+      // Check that the second panel is now correctly labelled
+      const secondPanel = element.querySelector('#panel2-container');
+      const updatedPanelNode = await window.getComputedAccessibleNode(secondPanel);
+      expect(updatedPanelNode.name).to.equal('Tab 2');
+    });
+  });
 });

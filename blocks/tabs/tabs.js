@@ -141,8 +141,30 @@ export default function decorate(block) {
     }
   });
 
-  const firstTab = tablist.querySelector('[role="tab"]');
-  if (firstTab) {
-    switchTab(firstTab);
+  let tabToActivate = tablist.querySelector('[role="tab"]');
+  const { hash } = window.location;
+  if (hash) {
+    const hashId = hash.substring(1);
+    // Try to find a panel that matches the hash directly (e.g., hash is #panel-one)
+    let targetPanel = document.getElementById(`${hashId}-container`);
+
+    // If no panel matches, the hash might be for an element inside a panel
+    if (!targetPanel) {
+      const targetElement = document.getElementById(hashId);
+      if (targetElement) {
+        targetPanel = targetElement.closest('[role="tabpanel"]');
+      }
+    }
+
+    if (targetPanel) {
+      const targetTab = tablist.querySelector(`[aria-controls="${targetPanel.id}"]`);
+      if (targetTab) {
+        tabToActivate = targetTab;
+      }
+    }
+  }
+
+  if (tabToActivate) {
+    switchTab(tabToActivate);
   }
 }

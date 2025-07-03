@@ -1,116 +1,48 @@
-# Accessible Tabs Block
+# Tabs Block
 
-This block transforms a list of links into a fully accessible and interactive tabbed interface, adhering to WCAG 2.2 AA/AAA guidelines and best practices for progressive enhancement.
+The `tabs` block creates a WCAG-compliant tabs interface. It's designed with **progressive enhancement** in mind, meaning it's fully functional and accessible as a simple list of in-page links even if JavaScript is disabled. The entire component is authored using a single table.
 
-## Features
+## Authoring Guide
 
-- **Progressive Enhancement**: Works as a list of anchor links if JavaScript is disabled.
-- **Accessible**: Follows ARIA patterns for tabbed interfaces (`tablist`, `tab`, `tabpanel`).
-- **Keyboard Navigable**: Full keyboard support (`ArrowKeys`, `Home`, `End`).
-- **Two Content Modes**: Supports both in-page content and asynchronous loading.
-- **Manual Activation**: Optional mode where users must press `Enter` or `Space` to activate a tab.
+The `tabs` block is authored using a table with a single column. Each row in the table corresponds to a specific part of the tabs component.
 
----
+-   **Row 1**: Defines the tab navigation. This must be a list of links. The text of each link becomes a tab's title, and the link's `href` should point to the ID of the corresponding content panel.
+-   **Row 2**: Contains the content for the **first** tab. For the non-JavaScript fallback to work correctly, this row must contain an element (typically a heading) with an `id` that exactly matches the `href` of the first tab link.
+-   **Row 3**: Contains the content for the **second** tab, with its own matching `id`.
+-   ...and so on for all subsequent tabs.
 
-## How to Use
+### Basic Tabs
 
-### 1. Static In-Page Content (Default)
+This is the recommended structure. It provides the best accessibility and gracefully degrades without JavaScript. AEM will automatically generate IDs from heading text. Make sure your link's `href` matches the generated ID (e.g., a heading "Product Features" becomes `id="product-features"`).
 
-This is the standard and most robust implementation. The tab links point to content that is already on the page.
+**Authoring Structure (in a document):**
 
-**Authoring Structure:**
+| tabs                                    |
+|-----------------------------------------|
+| - [Product Features](#product-features)<br> - [Customer Reviews](#customer-reviews) |
+| ### Product Features<br>This is the content for the first panel. You can add any other content or blocks here. |
+| ### Customer Reviews<br>This is the content for the second panel. |
 
-1.  Create a **Tabs** block.
-2.  Inside, create a bulleted list of links. Each link's `href` must be an anchor pointing to the ID of a content `div` on the same page.
-3.  Create the corresponding content `div`s with matching `id` attributes.
+### Asynchronous Tabs
 
-**Example HTML:**
-
-```html
-<!-- The Tabs block itself -->
-<div class="tabs">
-  <div>
-    <ul>
-      <li><a href="#features">Product Features</a></li>
-      <li><a href="#reviews">Customer Reviews</a></li>
-    </ul>
-  </div>
-</div>
-
-<!-- The content panels elsewhere on the page -->
-<div id="features">
-  <h2>Product Features</h2>
-  <p>Content for the features tab...</p>
-</div>
-
-<div id="reviews">
-  <h2>Customer Reviews</h2>
-  <p>Content for the reviews tab...</p>
-</div>
-```
-
-### 2. Asynchronous Content Loading
-
-For content that should be loaded on-demand (e.g., from another page).
+For better performance, panel content can be loaded on-demand when a user selects a tab. To do this, place a single link to a `.plain.html` page in that tab's corresponding content row.
 
 **Authoring Structure:**
 
-1.  Follow the same structure as the static tabs.
-2.  For the panel that should load content dynamically, create the `div` with a matching `id`, but place a single link inside it pointing to the `.plain.html` version of the content to be loaded.
+| tabs                                |
+|-------------------------------------|
+| - [Our Mission](#our-mission)<br>- [Contact Us](#contact-us)         |
+| ### Our Mission<br> This content is loaded immediately. |
+| [/contact.plain.html]               |
 
-**Example HTML:**
+### Additional Options
 
-```html
-<!-- The Tabs block itself -->
-<div class="tabs">
-  <div>
-    <ul>
-      <li><a href="#features">Product Features</a></li>
-      <li><a href="#contact">Contact Us</a></li>
-    </ul>
-  </div>
-</div>
+#### Manual Activation
 
-<!-- Static panel -->
-<div id="features">
-  <h2>Product Features</h2>
-  <p>Content for the features tab...</p>
-</div>
+By default, tabs are activated as soon as they receive focus via arrow keys. To require users to press `Enter` or `Space` to activate a tab, add the `(manual)` style to the `tabs` block name.
 
-<!-- Panel that will load content from /contact.plain.html -->
-<div id="contact">
-  <a href="/contact.plain.html"></a>
-</div>
-```
+**Authoring Structure:**
 
-### 3. Manual Activation Mode
-
-To enable manual activation, add the `manual` class to the tabs block. In this mode, arrow keys only move focus; `Enter` or `Space` is required to switch panels.
-
-**Example HTML:**
-
-```html
-<div class="tabs manual">
-  <div>
-    <ul>
-      <li><a href="#panel1">First Tab</a></li>
-      <li><a href="#panel2">Second Tab</a></li>
-    </ul>
-  </div>
-</div>
-```
-
----
-
-## CSS Customization
-
-The block's appearance can be customized by overriding the following CSS custom properties at the project level:
-
-```css
-.tabs {
-  --tab-border-color: #888;
-  --tab-border-color-active: #005A9C;
-  --tab-background-hover: #f0f0f0;
-  /* ... and more */
-}
-```
+| tabs (manual)                       |
+|-------------------------------------|
+| ...                                 |
