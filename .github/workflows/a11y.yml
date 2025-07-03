@@ -78,11 +78,18 @@ jobs:
               console.log(`Auditing ${url} (type: ${type}, slug: ${slug})`);
               const axeFile = `${reportDir}/axe-${type}-${slug}.json`;
               const lhrFile = `${reportDir}/lhr-${type}-${slug}.json`;
+              const aemFile = `${reportDir}/aem-${type}-${slug}.json`;
 
               try {
                 execSync(`node ./.github/run-axe.cjs --url ${url} --output ${axeFile}`, { stdio: "inherit" });
               } catch (e) {
                 console.warn(`Axe audit for ${url} failed to execute.`);
+              }
+
+              try {
+                execSync(`node ./.github/run-aem-rules.js --url ${url} --output ${aemFile}`, { stdio: "inherit" });
+              } catch (e) {
+                console.warn(`Custom AEM rules audit for ${url} failed to execute.`);
               }
 
               try {

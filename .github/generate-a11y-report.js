@@ -125,6 +125,23 @@ function calculateAxeScore(violations = []) {
 }
 
 /**
+ * Calculates a score out of 100 based on custom AEM violations.
+ * @param {Array} violations - An array of AEM violation objects.
+ * @return {Number} The calculated score.
+ */
+function calculateAEMScore(violations = []) {
+  const penalties = {
+    critical: 20, // AEM-specific critical issues might be more impactful
+    serious: 10,
+    moderate: 4,
+    minor: 2,
+  };
+
+  const totalPenalty = violations.reduce((acc, v) => acc + (penalties[v.impact] || 0), 0);
+  return Math.max(0, 100 - totalPenalty);
+}
+
+/**
  * Main function to generate the accessibility summary report.
  * @param {String} reportsDir Directory containing the report files.
  * @param {String} outputFile Path to write the final summary markdown file.
@@ -165,33 +182,39 @@ function main(reportsDir, outputFile) {
     const pageReports = reportsBySlug[slug];
     const candidateAxe = pageReports.candidate?.axe;
     const candidateLhr = pageReports.candidate?.lhr;
+    const candidateAem = pageReports.candidate?.aem;
     
     // We need at least an Axe report to proceed
     if (!candidateAxe) continue;
 
     const url = candidateLhr?.finalUrl || candidateAxe[0]?.url || slug;
     const axeViolations = (candidateAxe[0]?.violations) || [];
+    const aemViolations = (candidateAem?.violations) || [];
     const axeScore = calculateAxeScore(axeViolations);
+    const aemScore = calculateAEMScore(aemViolations);
     const lhScore = candidateLhr ? Math.round((candidateLhr.categories.accessibility.score || 0) * 100) : null;
     
     const baselineAxe = pageReports.baseline?.axe;
     const baselineLhr = pageReports.baseline?.lhr;
+    const baselineAem = pageReports.baseline?.aem;
     const hasBaseline = !!baselineAxe;
 
     let scoreCell;
     
     if (hasBaseline) {
         const baselineAxeViolations = (baselineAxe[0]?.violations) || [];
+        const baselineAemViolations = (baselineAem?.violations) || [];
         const baselineAxeScore = calculateAxeScore(baselineAxeViolations);
+        const baselineAemScore = calculateAEMScore(baselineAemViolations);
         const baselineLhScore = baselineLhr ? Math.round((baselineLhr.categories.accessibility.score || 0) * 100) : null;
 
-        const candidateCombinedScore = lhScore !== null ? Math.round(axeScore * 0.6 + lhScore * 0.4) : axeScore;
-        const baselineCombinedScore = baselineLhScore !== null ? Math.round(baselineAxeScore * 0.6 + baselineLhScore * 0.4) : baselineAxeScore;
+        const candidateCombinedScore = lhScore !== null ? Math.round(axeScore * 0.5 + aemScore * 0.2 + lhScore * 0.3) : Math.round(axeScore * 0.8 + aemScore * 0.2);
+        const baselineCombinedScore = baselineLhScore !== null ? Math.round(baselineAxeScore * 0.5 + baselineAemScore * 0.2 + baselineLhScore * 0.3) : Math.round(baselineAxeScore * 0.8 + baselineAemScore * 0.2);
         
         const scoreDiff = candidateCombinedScore - baselineCombinedScore;
         scoreCell = `${candidateCombinedScore}/100 (${getScoreChangeEmoji(scoreDiff)} ${scoreDiff >= 0 ? `+${scoreDiff}` : scoreDiff})`;
     } else {
-        const combinedScore = lhScore !== null ? Math.round(axeScore * 0.6 + lhScore * 0.4) : axeScore;
+        const combinedScore = lhScore !== null ? Math.round(axeScore * 0.5 + aemScore * 0.2 + lhScore * 0.3) : Math.round(axeScore * 0.8 + aemScore * 0.2);
         scoreCell = `${combinedScore}/100`;
     }
 
