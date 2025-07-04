@@ -50,7 +50,7 @@
     "start-server-and-test": "^2.0.12",
     "stylelint": "16.21.1",
     "stylelint-config-standard": "38.0.0",
-    "jsdom": "^24.1.0",
+    "jsdom": "^26.0.0",
     "lighthouse": "^12.1.0",
     "sinon": "^18.0.0",
     "@axe-core/playwright": "^4.9.1"
