@@ -13,24 +13,27 @@
   --tab-spacing-l: 20px;
 }
 
-/* Basic styles for the tabs block */
+/* Mobile First: Vertical Tabs */
 .tabs-list {
   display: flex;
-  border-bottom: var(--tab-border-width) solid var(--tab-border-color);
+  flex-direction: column;
   margin-bottom: var(--tab-spacing-m);
+  border-left: var(--tab-border-width) solid var(--tab-border-color);
 }
 
 [role="tab"] {
+  width: 100%;
+  margin: 0;
   padding: var(--tab-spacing-m) var(--tab-spacing-l);
   cursor: pointer;
   background: none;
   border: none;
-  border-bottom: var(--tab-border-width) solid var(--tab-border-color);
-  border-radius: var(--tab-border-radius);
+  border-left: calc(var(--tab-border-width)) solid transparent; /* Reserve space for active indicator */
+  border-radius: 0;
   font-size: 1em;
   font-weight: var(--tab-text-weight);
   color: var(--tab-text-color);
-  margin-bottom: calc(var(--tab-border-width) * -1);
+  text-align: left;
 }
 
 [role="tab"]:focus {
@@ -43,11 +46,13 @@
 }
 
 [role="tab"][aria-selected="true"] {
-  border-bottom-color: var(--tab-border-color-active);
-  border-bottom-width: calc(2 * var(--tab-border-width));
+  margin-left: calc(var(--tab-border-width) * -1);
+  border-left-color: var(--tab-border-color-active); /* Make reserved border visible */
+  border-left-width: calc(2 * var(--tab-border-width));
   font-weight: var(--tab-text-weight-active);
 }
 
+/* Focus styles are universal */
 [role="tab"]:focus-visible,
 [role="tab"]:focus-visible:hover {
   color: var(--tab-focus-text-color);
@@ -63,4 +68,26 @@
 
 [role="tabpanel"] {
   border-top: none;
+}
+
+/* Desktop: Horizontal Tabs */
+@media (width >= 768px) {
+  .tabs-list {
+    flex-direction: row;
+    border-left: none;
+    border-bottom: var(--tab-border-width) solid var(--tab-border-color);
+  }
+
+  [role="tab"] {
+    width: auto;
+    border-left: none;
+    border-bottom: var(--tab-border-width) solid transparent; /* Reserve space for active indicator */
+    text-align: center;
+  }
+
+  [role="tab"][aria-selected="true"] {
+    margin-bottom: calc(var(--tab-border-width) * -1); /* Overlap the list's bottom border */
+    border-bottom-color: var(--tab-border-color-active);
+    border-bottom-width: calc(2 * var(--tab-border-width));
+  }
 }
