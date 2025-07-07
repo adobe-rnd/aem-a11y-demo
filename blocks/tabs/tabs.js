@@ -96,7 +96,6 @@ export default function decorate(block) {
     if (panel) {
       const tab = document.createElement('button');
       tab.id = tabId;
-      tab.setAttribute('role', 'tab');
       tab.setAttribute('aria-controls', `${panelId}-container`);
       tab.setAttribute('aria-selected', 'false');
       tab.setAttribute('tabindex', '-1');
