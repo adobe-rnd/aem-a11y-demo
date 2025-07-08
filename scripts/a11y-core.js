@@ -38,3 +38,15 @@ export function getItemForKeyEvent(e, items) {
 export function getRandomId(scope = 'a11y') {
   return `${scope}-${Math.random().toString(36).substring(2, 15)}`;
 }
+
+/**
+ * Returns an array of focusable elements within a given element.
+ * @param {HTMLElement} element - The element to search for focusable elements.
+ * @returns {HTMLElement[]} An array of focusable elements.
+ */
+export function getFocusableElements(element) {
+  if (!element) {
+    return [];
+  }
+  return Array.from(element.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), details, [tabindex]:not([tabindex="-1"])'));
+}

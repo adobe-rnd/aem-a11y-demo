@@ -34,11 +34,8 @@
   font-weight: var(--tab-text-weight);
   color: var(--tab-text-color);
   text-align: left;
-}
-
-[role="tab"]:focus {
-  color: inherit;
-  background-color: inherit;
+  white-space: normal;
+  min-height: 44px;
 }
 
 [role="tab"]:hover {
@@ -71,9 +68,9 @@
 }
 
 /* Desktop: Horizontal Tabs */
-@media (width >= 768px) {
+@media (width >= 600px) {
   .tabs-list {
-    flex-direction: row;
+    flex-flow: row wrap;
     border-left: none;
     border-bottom: var(--tab-border-width) solid var(--tab-border-color);
   }

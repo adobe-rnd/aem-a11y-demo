@@ -1,4 +1,4 @@
-import { getRandomId, getItemForKeyEvent } from '../../scripts/a11y-core.js';
+import { getRandomId, getFocusableElements, getItemForKeyEvent } from '../../scripts/a11y-core.js';
 
 const originalPanelLinks = {};
 
@@ -6,7 +6,7 @@ const originalPanelLinks = {};
  * Switch between tabs
  * @param {Element} newTab - The tab to activate
  */
-function switchTab(newTab) {
+async function switchTab(newTab) {
   const tablist = newTab.closest('[role="tablist"]');
   const oldTab = tablist.querySelector('[aria-selected="true"]');
 
@@ -31,12 +31,10 @@ function switchTab(newTab) {
     // Only load async content if it hasn't been loaded before
     if (!hasContent && dataSource && !isLoaded) {
       newPanel.setAttribute('aria-busy', 'true');
-      fetch(dataSource)
-        .then((response) => {
-          if (response.ok) return response.text();
-          throw new Error('Network response was not ok.');
-        })
-        .then((html) => {
+      try {
+        const response = await fetch(dataSource);
+        if (response.ok) {
+          const html = await response.text();
           const parser = new DOMParser();
           const doc = parser.parseFromString(html, 'text/html');
           const content = doc.querySelector('main > div');
@@ -44,20 +42,20 @@ function switchTab(newTab) {
             newPanel.innerHTML = '';
             newPanel.append(content);
           }
-          newPanel.removeAttribute('aria-busy');
-          newPanel.removeAttribute('aria-live');
-          newPanel.dataset.loaded = 'true'; // Mark as loaded
-        })
-        .catch(() => {
-          newPanel.innerHTML = '';
-          const originalLink = originalPanelLinks[dataSource];
-          if (originalLink) {
-            newPanel.append(originalLink);
-          }
-          newPanel.removeAttribute('aria-busy');
-          newPanel.removeAttribute('aria-live');
-          newPanel.dataset.loaded = 'true'; // Mark as loaded even on error
-        });
+        } else {
+          throw new Error('Network response was not ok.');
+        }
+      } catch (e) {
+        newPanel.innerHTML = '';
+        const originalLink = originalPanelLinks[dataSource];
+        if (originalLink) {
+          newPanel.append(originalLink);
+        }
+      } finally {
+        newPanel.removeAttribute('aria-busy');
+        newPanel.removeAttribute('aria-live');
+        newPanel.dataset.loaded = 'true'; // Mark as loaded
+      }
     }
   }
   newTab.focus();
@@ -67,7 +65,7 @@ function switchTab(newTab) {
  * Decorates the tabs block with accessibility and functionality.
  * @param {Element} block - The tabs block element.
  */
-export default function decorate(block) {
+export default async function decorate(block) {
   const tablistContainer = block.querySelector('div');
   const tablist = document.createElement('div');
   tablist.setAttribute('role', 'tablist');
@@ -100,7 +98,25 @@ export default function decorate(block) {
       tab.setAttribute('aria-controls', `${panelId}-container`);
       tab.setAttribute('aria-selected', 'false');
       tab.setAttribute('tabindex', '-1');
-      tab.textContent = link.textContent.trim();
+
+      // Move content from the link to the tab button
+      tab.append(...link.childNodes);
+
+      // If there's no text content, the link might be an icon,
+      // so we use the aria-label from the link as the tab's accessible name.
+      if (!tab.textContent.trim() && link.getAttribute('aria-label')) {
+        tab.setAttribute('aria-label', link.getAttribute('aria-label'));
+      }
+
+      tab.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab' && !e.shiftKey) {
+          e.preventDefault();
+          const p = document.getElementById(tab.getAttribute('aria-controls'));
+          const firstFocusable = getFocusableElements(p)?.[0];
+          firstFocusable?.focus();
+        }
+      });
+
       tablist.append(tab);
 
       panel.setAttribute('role', 'tabpanel');
@@ -108,8 +124,19 @@ export default function decorate(block) {
       panel.setAttribute('aria-labelledby', tabId);
       panel.setAttribute('hidden', '');
 
+      // Handle Shift+Tab from panel back to tab
+      panel.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab' && e.shiftKey) {
+          // If focus is on the first focusable element, move focus back to the tab
+          if (getFocusableElements(panel)?.[0] === document.activeElement) {
+            e.preventDefault();
+            tab.focus();
+          }
+        }
+      });
+
       const panelLink = panel.querySelector('a');
-      if (panel.childElementCount === 1 && panelLink) {
+      if (panel.childElementCount === 1 && panel.firstElementChild === panelLink) {
         originalPanelLinks[panelLink.href] = panelLink.cloneNode(true);
         panel.dataset.src = panelLink.href;
         panel.setAttribute('aria-live', 'polite');
@@ -166,6 +193,6 @@ export default function decorate(block) {
   }
 
   if (tabToActivate) {
-    switchTab(tabToActivate);
+    await switchTab(tabToActivate);
   }
 }

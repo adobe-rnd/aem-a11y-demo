@@ -25,6 +25,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@anthropic-ai/claude-code": "1.0.43",
+    "@axe-core/playwright": "^4.9.1",
     "@babel/eslint-parser": "7.28.0",
     "@lhci/cli": "^0.15.1",
     "@open-wc/testing": "^4.0.0",
@@ -37,23 +39,22 @@
     "@web/test-runner-playwright": "^0.11.1",
     "@web/test-runner-visual-regression": "^0.10.0",
     "axe-cli": "^3.2.1",
-    "axe-core": "^4.10.3",
+    "axe-core": "4.10.3",
     "chai": "^5.1.1",
-    "chai-a11y-axe": "^1.1.2",
+    "chai-a11y-axe": "^1.5.0",
     "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-chai-friendly": "^1.1.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-playwright": "^2.0.0",
     "http-server": "^14.1.1",
-    "mocha": "^11.0.0",
-    "start-server-and-test": "^2.0.12",
-    "stylelint": "16.21.1",
-    "stylelint-config-standard": "38.0.0",
     "jsdom": "^26.0.0",
     "lighthouse": "^12.1.0",
+    "mocha": "^11.0.0",
     "sinon": "^21.0.0",
-    "@axe-core/playwright": "^4.9.1"
+    "start-server-and-test": "^2.0.12",
+    "stylelint": "16.21.1",
+    "stylelint-config-standard": "38.0.0"
   },
   "directories": {
     "test": "tests"
@@ -65,5 +66,8 @@
   "bugs": {
     "url": "https://github.com/adobe-rnd/aem-a11y-demo/issues"
   },
-  "homepage": "https://github.com/adobe-rnd/aem-a11y-demo#readme"
+  "homepage": "https://github.com/adobe-rnd/aem-a11y-demo#readme",
+  "dependencies": {
+    "aem-a11y-lib": "file:../aem-a11y-lib"
+  }
 }
