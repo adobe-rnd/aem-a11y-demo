@@ -246,10 +246,8 @@ describe('Tabs Block', () => {
               </ul>
             </div>
           </div>
-          <div id="panel1">Panel 1</div>
-          <div id="panel-404">
-            <a href="/this/path/will/404.plain.html">Link to 404</a>
-          </div>
+          <div><div id="panel1">Panel 1</div></div>
+          <div><div id="panel-404"><a href="/this/path/will/404.plain.html">Link to 404</a></div></div>
         </div>
       `);
 

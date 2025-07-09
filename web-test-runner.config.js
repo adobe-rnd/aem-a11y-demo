@@ -9,6 +9,7 @@ const commonjs = fromRollup(rollupCommonjs);
 
 export default {
   files: ['tests/**/*.test.js'],
+  nodeResolve: true,
   plugins: [
     visualRegressionPlugin({
       baseDir: 'tests/snapshots',

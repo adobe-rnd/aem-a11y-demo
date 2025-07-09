@@ -5,24 +5,8 @@ import {
   expect,
   nextFrame,
 } from '@open-wc/testing';
-import { setViewport } from '@web/test-runner-commands';
+import { emulateMedia, setViewport } from '@web/test-runner-commands';
 import decorate from '../../blocks/tabs/tabs.js';
-
-/**
- * Injects temporary styles to simulate browser settings for a test.
- * @param {string} css - The CSS rules to inject.
- * @returns {() => void} A cleanup function to remove the injected styles.
- */
-function simulateBrowserSetting(css) {
-  const styleEl = document.createElement('style');
-  styleEl.id = 'test-browser-simulation';
-  styleEl.innerHTML = css;
-  document.head.appendChild(styleEl);
-
-  return () => {
-    document.head.removeChild(styleEl);
-  };
-}
 
 /**
  * Helper function to load a component's CSS file.
@@ -60,6 +44,14 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
   before(async () => {
     // Load the component's CSS once for all tests.
     await loadComponentCSS('../../blocks/tabs/tabs.css');
+  });
+
+  beforeEach(async () => {
+    await emulateMedia({
+      contrast: 'no-preference',
+      reducedMotion: 'no-preference',
+      forcedColors: 'none',
+    });
   });
 
   let block;
@@ -395,6 +387,7 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
         // This test validates against the stricter AAA contrast requirements.
         // While not always mandatory, this ensures the component can be used in
         // contexts that require the highest level of accessibility.
+        await emulateMedia({ contrast: 'more' });
         await setupStandardBlock();
         await expect(block).to.be.accessible({
           runOnly: {
@@ -402,6 +395,16 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
             values: ['wcag2aaa'],
           },
         });
+
+        await emulateMedia({ contrast: 'no-preference', forcedColors: 'active' });
+        await setupStandardBlock();
+        await expect(block).to.be.accessible({
+          runOnly: {
+            type: 'tag',
+            values: ['wcag2aaa'],
+          },
+        });
+        await emulateMedia({ contrast: 'no-preference', forcedColors: 'none' });
       });
 
       it.skip('1.4.7 Low or No Background Audio (Level AAA)', () => {
@@ -438,24 +441,6 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
             values: ['non-text-contrast'],
           },
         });
-      });
-
-      it.skip('High Contrast (Forced Colors) Simulation', async () => {
-        const cleanup = simulateBrowserSetting(`
-          .tabs {
-            --tab-border-color-active: highlight;
-            --tab-text-color: CanvasText;
-            background-color: Canvas;
-          }
-          [role="tab"][aria-selected="true"] {
-            border-color: highlight;
-          }
-        `);
-        await setupStandardBlock();
-        const activeTab = block.querySelector('[aria-selected="true"]');
-        const styles = window.getComputedStyle(activeTab);
-        expect(styles.borderColor).to.not.equal('transparent');
-        cleanup();
       });
 
       it('1.4.12 Text Spacing (Level AA)', async () => {
@@ -632,14 +617,13 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
       });
 
       it('2.3.3 Animation from Interactions (Level AA)', async () => {
-        const cleanup = simulateBrowserSetting('[role="tab"] { transition: none !important; }');
+        await emulateMedia({ reducedMotion: 'reduce' });
         await setupStandardBlock();
         const tab = block.querySelector('[role="tab"]');
-        tab.style.transition = 'transform 0.3s ease';
-        await nextFrame();
         const styles = window.getComputedStyle(tab);
-        expect(styles.transitionProperty).to.equal('none');
-        cleanup();
+        expect(styles.transitionProperty).to.equal('all');
+        expect(styles.transitionDuration).to.equal('0s');
+        await emulateMedia({ reducedMotion: 'no-preference' });
       });
     });
 
