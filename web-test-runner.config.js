@@ -8,8 +8,7 @@ import { visualRegressionPlugin } from '@web/test-runner-visual-regression/plugi
 const commonjs = fromRollup(rollupCommonjs);
 
 export default {
-  files: ['tests/**/*.test.js', 'blocks/**/*.test.js'],
-  nodeResolve: true,
+  files: ['tests/**/*.test.js'],
   plugins: [
     visualRegressionPlugin({
       baseDir: 'tests/snapshots',
