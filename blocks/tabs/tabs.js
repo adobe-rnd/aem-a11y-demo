@@ -110,10 +110,12 @@ export default async function decorate(block) {
 
       tab.addEventListener('keydown', (e) => {
         if (e.key === 'Tab' && !e.shiftKey) {
-          e.preventDefault();
-          const p = document.getElementById(tab.getAttribute('aria-controls'));
-          const firstFocusable = getFocusableElements(p)?.[0];
-          firstFocusable?.focus();
+          const firstFocusable = getFocusableElements(panel)?.[0];
+          // If the panel has no focusable elements, let the browser handle Tab.
+          if (firstFocusable) {
+            e.preventDefault();
+            firstFocusable.focus();
+          }
         }
       });
 
@@ -135,8 +137,10 @@ export default async function decorate(block) {
         }
       });
 
-      const panelLink = panel.querySelector('a');
-      if (panel.childElementCount === 1 && panel.firstElementChild === panelLink) {
+      const panelLink = panel.querySelector(':scope > a, :scope > div > a');
+      if (panelLink
+        && panel.childElementCount === 1
+        && panel.textContent === panelLink.textContent) {
         originalPanelLinks[panelLink.href] = panelLink.cloneNode(true);
         panel.dataset.src = panelLink.href;
         panel.setAttribute('aria-live', 'polite');

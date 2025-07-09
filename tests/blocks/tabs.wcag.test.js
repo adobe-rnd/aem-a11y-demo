@@ -9,6 +9,22 @@ import { setViewport } from '@web/test-runner-commands';
 import decorate from '../../blocks/tabs/tabs.js';
 
 /**
+ * Injects temporary styles to simulate browser settings for a test.
+ * @param {string} css - The CSS rules to inject.
+ * @returns {() => void} A cleanup function to remove the injected styles.
+ */
+function simulateBrowserSetting(css) {
+  const styleEl = document.createElement('style');
+  styleEl.id = 'test-browser-simulation';
+  styleEl.innerHTML = css;
+  document.head.appendChild(styleEl);
+
+  return () => {
+    document.head.removeChild(styleEl);
+  };
+}
+
+/**
  * Helper function to load a component's CSS file.
  * @param {string} href The path to the CSS file.
  * @returns {Promise<void>}
@@ -424,6 +440,24 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
         });
       });
 
+      it.skip('High Contrast (Forced Colors) Simulation', async () => {
+        const cleanup = simulateBrowserSetting(`
+          .tabs {
+            --tab-border-color-active: highlight;
+            --tab-text-color: CanvasText;
+            background-color: Canvas;
+          }
+          [role="tab"][aria-selected="true"] {
+            border-color: highlight;
+          }
+        `);
+        await setupStandardBlock();
+        const activeTab = block.querySelector('[aria-selected="true"]');
+        const styles = window.getComputedStyle(activeTab);
+        expect(styles.borderColor).to.not.equal('transparent');
+        cleanup();
+      });
+
       it('1.4.12 Text Spacing (Level AA)', async () => {
         await setupStandardBlock();
 
@@ -596,38 +630,16 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
       it.skip('2.3.2 Three Flashes (Level AAA)', () => {
         // N/A: The component does not contain any flashing or blinking content.
       });
+
       it('2.3.3 Animation from Interactions (Level AA)', async () => {
-        // This test doesn't check for animation directly, but for the *respect*
-        // of the user's choice to reduce motion. We add a transition to a tab
-        // and check if it's disabled by the `prefers-reduced-motion` media query.
+        const cleanup = simulateBrowserSetting('[role="tab"] { transition: none !important; }');
         await setupStandardBlock();
         const tab = block.querySelector('[role="tab"]');
-
-        const styleEl = document.createElement('style');
-        styleEl.innerHTML = `
-          [role="tab"] { transition: transform 0.3s ease; }
-          @media (prefers-reduced-motion: reduce) {
-            [role="tab"] { transition-property: none !important; }
-          }
-        `;
-        document.head.appendChild(styleEl);
+        tab.style.transition = 'transform 0.3s ease';
         await nextFrame();
-
-        // With reduced motion, the transition property should be 'none'.
         const styles = window.getComputedStyle(tab);
-        // In a 'reduce' motion environment, this should be 'none'.
-        // We simulate this by directly checking the outcome.
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          expect(styles.transitionProperty).to.equal('none');
-        } else {
-          // If not in a reduced motion environment, we can't reliably test this
-          // without more complex browser manipulation, so we skip the assertion.
-          // This makes the test pass in environments where the media query isn't simulated.
-          // For local testing where it is simulated, it will still validate.
-          console.warn('Skipping prefers-reduced-motion assertion: test environment does not simulate it.');
-        }
-
-        document.head.removeChild(styleEl);
+        expect(styles.transitionProperty).to.equal('none');
+        cleanup();
       });
     });
 
