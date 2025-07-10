@@ -1,0 +1,80 @@
+.breadcrumb {
+  /* Define all component-specific properties as CSS variables for easy theming and maintenance. */
+  --breadcrumb-link-color: var(--link-color, #005A9C);
+  --breadcrumb-link-hover-decoration: underline;
+  --breadcrumb-current-page-font-weight: bold;
+  --breadcrumb-separator-color: var(--text-color-quiet, #888);
+  --breadcrumb-separator-content: '\203A'; /* Single right-pointing angle quotation mark (›) */
+  --breadcrumb-spacing-s: .25em;
+  --breadcrumb-spacing-m: .5em;
+  --breadcrumb-spacing-l: 1em;
+  --breadcrumb-text-color: var(--text-color, #333);
+}
+  
+.breadcrumb nav {
+  margin: var(--breadcrumb-spacing-m) 0;
+}
+  
+.breadcrumb ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+  
+.breadcrumb li {
+  display: inline-flex;
+  align-items: center;
+}
+  
+.breadcrumb li:not(:last-child)::after {
+  content: var(--breadcrumb-separator-content);
+  color: var(--breadcrumb-separator-color);
+}
+  
+.breadcrumb a {
+  display: flex;
+  align-items: center;
+  color: var(--breadcrumb-link-color);
+  text-decoration: none;
+  padding: var(--breadcrumb-spacing-s) var(--breadcrumb-spacing-m);
+  min-height: 24px;
+  min-width: 24px;
+}
+  
+.breadcrumb a:hover {
+  text-decoration: var(--breadcrumb-link-hover-decoration);
+}
+  
+/* Style for the current page (last item) */
+.breadcrumb li[aria-current="page"] {
+  color: var(--breadcrumb-font-color);
+  font-weight: var(--breadcrumb-current-page-font-weight);
+}
+
+.breadcrumb li[aria-current="page"]:not(:has(a)) {
+  padding: var(--breadcrumb-spacing-s) var(--breadcrumb-spacing-m);
+}
+
+/* Increase contrast for AAA compliance when requested by the user agent. */
+@media (prefers-contrast: more) {
+  .breadcrumb {
+    --breadcrumb-link-color: #00458a; /* Darker blue for higher contrast */
+    --breadcrumb-font-color: #000;
+  }
+}
+  
+  /* Adapt styles for Windows High Contrast Mode */
+@media (forced-colors: active) {
+  .breadcrumb a {
+    color: LinkText;
+  }
+  
+  .breadcrumb li[aria-current="page"],
+  .breadcrumb li:not(:last-child)::after {
+    color: CanvasText;
+  }
+}
+  

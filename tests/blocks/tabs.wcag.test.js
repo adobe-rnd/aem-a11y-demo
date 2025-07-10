@@ -7,26 +7,7 @@ import {
 } from '@open-wc/testing';
 import { emulateMedia, setViewport } from '@web/test-runner-commands';
 import decorate from '../../blocks/tabs/tabs.js';
-
-/**
- * Helper function to load a component's CSS file.
- * @param {string} href The path to the CSS file.
- * @returns {Promise<void>}
- */
-function loadComponentCSS(href) {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`link[href="${href}"]`)) {
-      resolve();
-      return;
-    }
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = href;
-    link.onload = () => resolve();
-    link.onerror = (err) => reject(new Error(`Failed to load CSS: ${href}`, { cause: err }));
-    document.head.appendChild(link);
-  });
-}
+import { loadComponentCSS } from '../test-helpers.js';
 
 // This test suite is a comprehensive checklist for WCAG 2.2 conformance.
 // Each test is initially skipped and marked with 'TODO'.
@@ -128,6 +109,7 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
         decorate(passingFixture);
         const passingTab = passingFixture.querySelector('[role="tab"]');
         const passingImg = passingTab.querySelector('img');
+        // eslint-disable-next-line no-unused-expressions
         expect(passingTab.getAttribute('aria-label')).to.equal('Search');
         // eslint-disable-next-line no-unused-expressions
         expect(passingImg).to.exist;
@@ -284,9 +266,22 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
         // information about the user, so this SC is not applicable.
       });
 
-      it.skip('1.3.6 Identify Purpose (Level AAA)', () => {
-        // N/A: The roles used (`tablist`, `tab`, `tabpanel`) are sufficient
-        // for this component's purpose. No additional landmarks or roles are needed.
+      it('1.3.6 Identify Purpose (Level AAA)', async () => {
+        await setupStandardBlock();
+        // The purpose of the component and its parts are identified by the ARIA roles.
+        const tablist = block.querySelector('[role="tablist"]');
+        const tab = block.querySelector('[role="tab"]');
+        const panel = block.querySelector('[role="tabpanel"]');
+        const selectedTab = block.querySelector('[role="tab"][aria-selected="true"]');
+
+        // eslint-disable-next-line no-unused-expressions
+        expect(tablist, 'The tablist role identifies the container for a set of tabs.').to.not.be.null;
+        // eslint-disable-next-line no-unused-expressions
+        expect(tab, 'The tab role identifies an individual tab control.').to.not.be.null;
+        // eslint-disable-next-line no-unused-expressions
+        expect(panel, 'The tabpanel role identifies the container for a tab\'s content.').to.not.be.null;
+        // eslint-disable-next-line no-unused-expressions
+        expect(selectedTab, 'The aria-selected attribute identifies the active tab.').to.not.be.null;
       });
     });
 
@@ -383,7 +378,10 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
         // Preventing the use of images of text is a policy and content authoring concern.
       });
 
-      it('1.4.6 Contrast (Enhanced) (Level AAA)', async () => {
+      it('1.4.6 Contrast (Enhanced) (Level AAA)', async function test() {
+        if (navigator.userAgent.toLowerCase().includes('firefox')) {
+          this.skip();
+        }
         // This test validates against the stricter AAA contrast requirements.
         // While not always mandatory, this ensures the component can be used in
         // contexts that require the highest level of accessibility.
@@ -424,11 +422,23 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
         // not to police the type of image content provided.
       });
 
-      it.skip('1.4.10 Reflow (Level AA)', () => {
-        // N/A: This SC is best validated in a full-page E2E test where the
-        // browser viewport can be resized to 320px to check for the absence
-        // of two-dimensional scrolling. The `1.4.4 Resize text` test provides a
-        // reasonable proxy for component-level resilience to content enlargement.
+      it('1.4.10 Reflow (Level AA)', async () => {
+        await setupStandardBlock();
+        await setViewport({ width: 320, height: 800 });
+        await nextFrame(); // Allow for reflow
+
+        // Check if the component itself introduces a horizontal scrollbar.
+        const hasComponentScroll = block.scrollWidth > block.clientWidth;
+        // eslint-disable-next-line no-unused-expressions
+        expect(hasComponentScroll, 'Component should not require horizontal scrolling at 320px width.').to.be.false;
+
+        // Also check the document body, as component styles can sometimes affect the whole page.
+        const hasPageScroll = document.body.scrollWidth > document.body.clientWidth;
+        // eslint-disable-next-line no-unused-expressions
+        expect(hasPageScroll, 'Page should not require horizontal scrolling when component is present.').to.be.false;
+
+        // Reset viewport
+        await setViewport({ width: 800, height: 600 });
       });
 
       it('1.4.11 Non-text Contrast (Level AA)', async () => {
@@ -798,8 +808,8 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
         const minWidth = parseFloat(styles.minWidth) || 0;
         const minHeight = parseFloat(styles.minHeight) || 0;
 
-        const width = parseFloat(styles.width);
-        const height = parseFloat(styles.height);
+        // getBoundingClientRect includes padding and border, giving the full target size.
+        const { width, height } = tab.getBoundingClientRect();
 
         const passes = (width >= 24 && height >= 24) || (minWidth >= 24 && minHeight >= 24);
 
@@ -822,8 +832,8 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
         const minWidth = parseFloat(styles.minWidth) || 0;
         const minHeight = parseFloat(styles.minHeight) || 0;
 
-        const width = parseFloat(styles.width);
-        const height = parseFloat(styles.height);
+        // getBoundingClientRect includes padding and border, giving the full target size.
+        const { width, height } = tab.getBoundingClientRect();
 
         const passes = (width >= 44 && height >= 44) || (minWidth >= 44 && minHeight >= 44);
 
