@@ -6,10 +6,15 @@ import {
   expect,
   waitUntil,
 } from '@open-wc/testing';
-import { sendKeys } from '@web/test-runner-commands';
-import decorate from '../../blocks/tabs/tabs.js';
+import { emulateMedia, sendKeys } from '@web/test-runner-commands';
+import decorate from '../../../blocks/tabs/tabs.js';
+import { loadComponentCSS } from '../../test-helpers.js';
 
 describe('Tabs Block', () => {
+  before(async () => {
+    await loadComponentCSS('../../blocks/tabs/tabs.css');
+  });
+
   describe('Core Functionality', () => {
     let block;
 
@@ -367,6 +372,39 @@ describe('Tabs Block', () => {
       const secondPanel = element.querySelector('#panel2-container');
       const updatedPanelNode = await window.getComputedAccessibleNode(secondPanel);
       expect(updatedPanelNode.name).to.equal('Tab 2');
+    });
+  });
+
+  describe('Dark Mode Support', () => {
+    it('should apply dark mode styles and maintain accessibility', async () => {
+      await emulateMedia({ colorScheme: 'dark' });
+      const element = await fixture(html`
+        <div class="tabs">
+          <div>
+            <ul>
+              <li><a href="#panel1">Tab 1</a></li>
+              <li><a href="#panel2">Tab 2</a></li>
+            </ul>
+          </div>
+          <div><div id="panel1">Panel 1</div></div>
+          <div><div id="panel2">Panel 2</div></div>
+        </div>
+      `);
+      await decorate(element);
+
+      const tab = element.querySelector('[role="tab"]');
+      const styles = window.getComputedStyle(tab);
+
+      // Check that a dark mode style is applied
+      expect(styles.backgroundColor).to.equal('rgb(18, 18, 18)');
+      expect(styles.color).to.equal('rgb(208, 208, 208)');
+
+      // Re-run accessibility check in dark mode to ensure contrast is still valid
+      await expect(element).to.be.accessible({
+        runOnly: { type: 'rule', values: ['color-contrast'] },
+      });
+
+      await emulateMedia({ colorScheme: 'light' });
     });
   });
 });

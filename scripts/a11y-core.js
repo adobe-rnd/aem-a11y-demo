@@ -2,17 +2,22 @@
  * Handles roving tabindex for keyboard navigation on a list of items.
  * @param {KeyboardEvent} e - The keyboard event.
  * @param {HTMLElement[]} items - The items to navigate through.
+ * @param {String} [direction='horizontal'] - The navigation direction ('horizontal' or 'vertical').
  * @returns {HTMLElement|null} The new item that should be focused, or null.
  */
 // eslint-disable-next-line import/prefer-default-export
-export function getItemForKeyEvent(e, items) {
+export function getItemForKeyEvent(e, items, direction = 'horizontal') {
   const currentItem = e.target;
   const itemIndex = items.indexOf(currentItem);
   let newItem = null;
 
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+  const isVertical = direction === 'vertical';
+  const nextKey = isVertical ? 'ArrowDown' : 'ArrowRight';
+  const prevKey = isVertical ? 'ArrowUp' : 'ArrowLeft';
+
+  if (e.key === nextKey) {
     newItem = items[(itemIndex + 1) % items.length];
-  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+  } else if (e.key === prevKey) {
     newItem = items[(itemIndex - 1 + items.length) % items.length];
   } else if (e.key === 'Home') {
     e.preventDefault();

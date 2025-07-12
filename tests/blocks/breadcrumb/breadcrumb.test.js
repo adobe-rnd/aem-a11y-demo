@@ -4,9 +4,16 @@ import {
   fixture,
   expect,
 } from '@open-wc/testing';
-import decorate from '../../blocks/breadcrumb/breadcrumb.js';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { emulateMedia } from '@web/test-runner-commands';
+import decorate from '../../../blocks/breadcrumb/breadcrumb.js';
+import { loadComponentCSS } from '../../test-helpers.js';
 
 describe('Breadcrumb Block', () => {
+  before(async () => {
+    await loadComponentCSS('../../blocks/breadcrumb/breadcrumb.css');
+  });
+
   it('decorates a standard breadcrumb list', async () => {
     const element = await fixture(html`
       <div class="breadcrumb">
@@ -108,5 +115,34 @@ describe('Breadcrumb Block', () => {
     const originalHTML = element.innerHTML;
     decorate(element);
     expect(element.innerHTML).to.equal(originalHTML);
+  });
+
+  describe('Dark Mode', () => {
+    it('should apply dark mode styles and maintain accessibility', async () => {
+      await emulateMedia({ colorScheme: 'dark' });
+      const element = await fixture(html`
+        <div class="breadcrumb">
+          <ul>
+            <li><a href="/link1">Home</a></li>
+            <li><a href="/link2">Category</a></li>
+            <li>Current Page</li>
+          </ul>
+        </div>
+      `);
+      decorate(element);
+
+      const link = element.querySelector('a');
+      const styles = window.getComputedStyle(link);
+
+      // Check that a dark mode style is applied
+      expect(styles.color).to.equal('rgb(156, 220, 254)');
+
+      // Re-run accessibility check in dark mode to ensure contrast is still valid
+      await expect(element).to.be.accessible({
+        runOnly: { type: 'rule', values: ['color-contrast'] },
+      });
+
+      await emulateMedia({ colorScheme: 'light' });
+    });
   });
 });

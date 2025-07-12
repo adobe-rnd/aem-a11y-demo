@@ -1,16 +1,30 @@
 .tabs {
+  --tab-background-color: var(--background-color, #fff);
+  --tab-background-hover: #f0f0f0;
   --tab-border-color: #888;
   --tab-border-color-active: var(--link-color, #005A9C);
   --tab-border-width: 2px;
-  --tab-border-radius: 0;
-  --tab-background-hover: #f0f0f0;
+  --tab-focus-text-color: #fff;
+  --tab-focus-outline-color: var(--link-color, #005A9C);
   --tab-text-color: var(--text-color, #333);
   --tab-text-weight: 500;
   --tab-text-weight-active: 700;
-  --tab-focus-text-color: #fff;
-  --tab-focus-outline-color: var(--link-color, #005A9C);
   --tab-spacing-m: .5em;
   --tab-spacing-l: 1em;
+
+  background-color: var(--tab-background-color);
+  color: var(--tab-text-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  .tabs {
+    --tab-background-color: var(--background-color, #121212);
+    --tab-background-hover: var(--light-color, #1e1e1e);
+    --tab-border-color-active: var(--link-color, #9cdcfe);
+    --tab-focus-text-color: var(--background-color, #000);
+    --tab-focus-outline-color: var(--link-color, #9cdcfe);
+    --tab-text-color: var(--text-color, #d0d0d0);
+  }
 }
 
 /* Mobile First: Vertical Tabs */
@@ -26,7 +40,7 @@
   margin: 0;
   padding: var(--tab-spacing-m) var(--tab-spacing-l);
   cursor: pointer;
-  background: none;
+  background-color: var(--tab-background-color);
   border: none;
   border-left: calc(var(--tab-border-width)) solid transparent; /* Reserve space for active indicator */
   border-radius: 0;
@@ -43,6 +57,7 @@
 }
 
 .tabs [role="tab"][aria-selected="true"] {
+  background-color: var(--tab-background-color);
   margin-left: calc(var(--tab-border-width) * -1);
   border-left-color: var(--tab-border-color-active); /* Make reserved border visible */
   border-left-width: calc(2 * var(--tab-border-width));
@@ -86,15 +101,6 @@
     margin-bottom: calc(var(--tab-border-width) * -1); /* Overlap the list's bottom border */
     border-bottom-color: var(--tab-border-color-active);
     border-bottom-width: calc(2 * var(--tab-border-width));
-  }
-}
-
-/* Increase contrast for AAA compliance when requested by the user agent. */
-@media (prefers-contrast: more) {
-  .tabs {
-    --tab-border-color-active: #00458a; /* Darker blue for higher contrast */
-    --tab-focus-outline-color: #00458a;
-    --tab-text-color: #000;
   }
 }
 

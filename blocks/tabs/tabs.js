@@ -5,8 +5,9 @@ const originalPanelLinks = {};
 /**
  * Switch between tabs
  * @param {Element} newTab - The tab to activate
+ * @param {boolean} [setFocus=true] - Whether to set focus to the new tab
  */
-async function switchTab(newTab) {
+async function switchTab(newTab, setFocus = true) {
   const tablist = newTab.closest('[role="tablist"]');
   const oldTab = tablist.querySelector('[aria-selected="true"]');
 
@@ -58,7 +59,9 @@ async function switchTab(newTab) {
       }
     }
   }
-  newTab.focus();
+  if (setFocus) {
+    newTab.focus();
+  }
 }
 
 /**
@@ -83,6 +86,8 @@ export default async function decorate(block) {
     tabLinks = [...tablistContainer.querySelectorAll('p')];
   }
 
+  let defaultTab = null;
+
   tabLinks.forEach((link, i) => {
     const tabId = getRandomId('tab');
     const panelId = link.href ? `${new URL(link.href).hash.substring(1)}` : getRandomId('tabpanel');
@@ -98,6 +103,14 @@ export default async function decorate(block) {
       tab.setAttribute('aria-controls', `${panelId}-container`);
       tab.setAttribute('aria-selected', 'false');
       tab.setAttribute('tabindex', '-1');
+
+      // Check for strong/em tag to set default open state
+      const emphasisElement = link.querySelector('strong, em');
+      if (emphasisElement) {
+        defaultTab = tab;
+        // "Unwrap" the content of the emphasis tag
+        emphasisElement.replaceWith(...emphasisElement.childNodes);
+      }
 
       // Move content from the link to the tab button
       tab.append(...link.childNodes);
@@ -161,7 +174,7 @@ export default async function decorate(block) {
   tablist.addEventListener('keydown', (e) => {
     const isManual = e.currentTarget.closest('.tabs.manual');
     const items = [...e.currentTarget.querySelectorAll('[role="tab"]')];
-    const newTab = getItemForKeyEvent(e, items);
+    const newTab = getItemForKeyEvent(e, items, 'horizontal');
 
     if (newTab && !isManual) {
       switchTab(newTab);
@@ -173,7 +186,7 @@ export default async function decorate(block) {
     }
   });
 
-  let tabToActivate = tablist.querySelector('[role="tab"]');
+  let tabToActivate = defaultTab || tablist.querySelector('[role="tab"]');
   const { hash } = window.location;
   if (hash) {
     const hashId = hash.substring(1);
@@ -197,6 +210,6 @@ export default async function decorate(block) {
   }
 
   if (tabToActivate) {
-    await switchTab(tabToActivate);
+    await switchTab(tabToActivate, false);
   }
 }

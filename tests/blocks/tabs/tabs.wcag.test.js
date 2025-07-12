@@ -6,8 +6,8 @@ import {
   nextFrame,
 } from '@open-wc/testing';
 import { emulateMedia, setViewport } from '@web/test-runner-commands';
-import decorate from '../../blocks/tabs/tabs.js';
-import { loadComponentCSS } from '../test-helpers.js';
+import decorate from '../../../blocks/tabs/tabs.js';
+import { loadComponentCSS, getFocusIndicatorMetrics, getFocusStyles } from '../../test-helpers.js';
 
 // This test suite is a comprehensive checklist for WCAG 2.2 conformance.
 // Each test is initially skipped and marked with 'TODO'.
@@ -41,6 +41,7 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
   const setupStandardBlock = async () => {
     const element = await fixture(html`
       <div>
+        <button id="pre-focus-button">Start</button>
         <div class="tabs">
           <div>
             <div>
@@ -330,6 +331,15 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
             values: ['color-contrast'],
           },
         });
+
+        await emulateMedia({ colorScheme: 'dark' });
+        await expect(block).to.be.accessible({
+          runOnly: {
+            type: 'rule',
+            values: ['color-contrast'],
+          },
+        });
+        await emulateMedia({ colorScheme: 'light' });
       });
 
       it('1.4.4 Resize text (Level AA)', async () => {
@@ -385,24 +395,39 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
         // This test validates against the stricter AAA contrast requirements.
         // While not always mandatory, this ensures the component can be used in
         // contexts that require the highest level of accessibility.
+
+        // Test with more contrast
         await emulateMedia({ contrast: 'more' });
         await setupStandardBlock();
         await expect(block).to.be.accessible({
           runOnly: {
-            type: 'tag',
-            values: ['wcag2aaa'],
+            type: 'rule',
+            values: ['color-contrast-enhanced'],
           },
         });
+        await emulateMedia({ contrast: 'no-preference' });
 
-        await emulateMedia({ contrast: 'no-preference', forcedColors: 'active' });
+        // Test with dark mode
+        await emulateMedia({ colorScheme: 'dark', contrast: 'more' });
         await setupStandardBlock();
         await expect(block).to.be.accessible({
           runOnly: {
-            type: 'tag',
-            values: ['wcag2aaa'],
+            type: 'rule',
+            values: ['color-contrast-enhanced'],
           },
         });
-        await emulateMedia({ contrast: 'no-preference', forcedColors: 'none' });
+        await emulateMedia({ colorScheme: 'light', contrast: 'no-preference' });
+
+        // Test with forced colors
+        await emulateMedia({ forcedColors: 'active' });
+        await setupStandardBlock();
+        await expect(block).to.be.accessible({
+          runOnly: {
+            type: 'rule',
+            values: ['color-contrast-enhanced'],
+          },
+        });
+        await emulateMedia({ forcedColors: 'none' });
       });
 
       it.skip('1.4.7 Low or No Background Audio (Level AAA)', () => {
@@ -690,37 +715,15 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
 
       it('2.4.7 Focus Visible (Level AA)', async () => {
         await setupStandardBlock();
-        const tabs = block.querySelectorAll('[role="tab"]');
-
-        const getFocusStyles = (el) => {
-          const styles = window.getComputedStyle(el);
-          return {
-            outline: styles.outline,
-            border: styles.border,
-            boxShadow: styles.boxShadow,
-            backgroundColor: styles.backgroundColor,
-          };
-        };
-
-        const initialStyles = getFocusStyles(tabs[1]);
-
-        // Apply focus and wait for styles to be applied.
-        tabs[0].focus();
-
-        // Force keyboard navigation to detect ":focus-visible" and not just ":focus"
-        tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-
-        await nextFrame();
-        const focusedStyles = getFocusStyles(tabs[1]);
-
-        // Assert that at least one of the common focus indicator properties has changed.
-        const hasStyleChanged = initialStyles.outline !== focusedStyles.outline
-          || initialStyles.border !== focusedStyles.border
-          || initialStyles.boxShadow !== focusedStyles.boxShadow
-          || initialStyles.backgroundColor !== focusedStyles.backgroundColor;
+        const tab = block.querySelector('[role="tab"]');
+        const { defaultState, focusState } = await getFocusStyles(tab);
+        const hasStyleChanged = defaultState.outline !== focusState.outline
+          || defaultState.border !== focusState.border
+          || defaultState.boxShadow !== focusState.boxShadow
+          || defaultState.backgroundColor !== focusState.backgroundColor;
 
         // eslint-disable-next-line no-unused-expressions
-        expect(hasStyleChanged, 'A visible focus indicator (e.g., outline, border, box-shadow) must be present.').to.be.true;
+        expect(hasStyleChanged, 'A visible focus indicator must be present.').to.be.true;
       });
 
       it.skip('2.4.8 Location (Level AAA)', () => {
@@ -746,10 +749,32 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
         // better suited for visual regression or manual testing.
       });
 
-      it.skip('2.4.13 Focus Appearance (Level AAA)', () => {
-        // N/A: This is an advanced test requiring color contrast analysis
-        // of the focus indicator against its background and ensuring it meets
-        // size requirements. This is better suited for manual or E2E testing.
+      it('2.4.13 Focus Appearance (Level AAA)', async () => {
+        await setupStandardBlock();
+        const tab = block.querySelector('[role="tab"]');
+
+        const initialMetrics = getFocusIndicatorMetrics(tab);
+
+        tab.focus();
+        await nextFrame();
+
+        const focusedMetrics = getFocusIndicatorMetrics(tab);
+
+        const outlineChanged = initialMetrics.outlineWidth !== focusedMetrics.outlineWidth;
+        const borderChanged = initialMetrics.borderWidth !== focusedMetrics.borderWidth;
+        const backgroundChanged = initialMetrics.backgroundColor !== focusedMetrics.backgroundColor;
+        const focusIndicatorThickness = focusedMetrics.outlineWidth + focusedMetrics.borderWidth;
+
+        // eslint-disable-next-line no-unused-expressions
+        expect(outlineChanged || borderChanged || backgroundChanged, 'A visual focus indicator must be present.').to.be.true;
+
+        if (outlineChanged || borderChanged) {
+          expect(focusIndicatorThickness).to.be.at.least(2, 'Focus indicator thickness should be at least 2px.');
+        }
+
+        await expect(block).to.be.accessible({
+          runOnly: { type: 'rule', values: ['non-text-contrast'] },
+        });
       });
     });
 

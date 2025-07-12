@@ -1,14 +1,36 @@
 .breadcrumb {
   /* Define all component-specific properties as CSS variables for easy theming and maintenance. */
+  --breadcrumb-background-color: var(--background-color, #fff);
+  --breadcrumb-border-width: 2px;
+  --breadcrumb-current-page-font-weight: bold;
+  --breadcrumb-focus-outline-color: var(--link-color, #005A9C);
   --breadcrumb-link-color: var(--link-color, #005A9C);
   --breadcrumb-link-hover-decoration: underline;
-  --breadcrumb-current-page-font-weight: bold;
   --breadcrumb-separator-color: var(--text-color-quiet, #888);
   --breadcrumb-separator-content: '\203A'; /* Single right-pointing angle quotation mark (›) */
   --breadcrumb-spacing-s: .25em;
   --breadcrumb-spacing-m: .5em;
   --breadcrumb-spacing-l: 1em;
   --breadcrumb-text-color: var(--text-color, #333);
+
+  background-color: var(--breadcrumb-background-color);
+  color: var(--breadcrumb-text-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  /* By defining the variables within this media query, we can easily manage dark mode styles
+  and ensure they override the default values without repeating selectors. */
+  .breadcrumb {
+    --breadcrumb-background-color: var(--background-color, #121212);
+    --breadcrumb-focus-outline-color: var(--link-color, #9cdcfe);
+    --breadcrumb-link-color: var(--link-color, #9cdcfe);
+    --breadcrumb-separator-color: var(--text-color-quiet, #8c8c8c);
+    --breadcrumb-text-color: var(--text-color, #d0d0d0);
+  }
+
+  .breadcrumb a:hover {
+    color: var(--link-hover-color, #fff); /* On hover, we can go to full white for a clear visual cue */
+  }
 }
   
 .breadcrumb nav {
@@ -47,10 +69,15 @@
 .breadcrumb a:hover {
   text-decoration: var(--breadcrumb-link-hover-decoration);
 }
+
+.breadcrumb a:focus-visible {
+  outline: var(--breadcrumb-border-width) solid var(--breadcrumb-focus-outline-color);
+  outline-offset: var(--breadcrumb-border-width);
+}
   
 /* Style for the current page (last item) */
 .breadcrumb li[aria-current="page"] {
-  color: var(--breadcrumb-font-color);
+  color: var(--breadcrumb-text-color);
   font-weight: var(--breadcrumb-current-page-font-weight);
 }
 
@@ -62,7 +89,7 @@
 @media (prefers-contrast: more) {
   .breadcrumb {
     --breadcrumb-link-color: #00458a; /* Darker blue for higher contrast */
-    --breadcrumb-font-color: #000;
+    --breadcrumb-text-color: #000;
   }
 }
   

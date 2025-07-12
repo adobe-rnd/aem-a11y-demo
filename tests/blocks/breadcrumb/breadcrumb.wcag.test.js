@@ -5,9 +5,10 @@ import {
   expect,
   nextFrame,
 } from '@open-wc/testing';
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { emulateMedia, setViewport } from '@web/test-runner-commands';
-import decorate from '../../blocks/breadcrumb/breadcrumb.js';
-import { loadComponentCSS } from '../test-helpers.js';
+import decorate from '../../../blocks/breadcrumb/breadcrumb.js';
+import { loadComponentCSS, getFocusIndicatorMetrics, getFocusStyles } from '../../test-helpers.js';
 
 // This test suite is a comprehensive checklist for WCAG 2.2 conformance.
 describe('Breadcrumb WCAG Compliance', () => {
@@ -16,15 +17,18 @@ describe('Breadcrumb WCAG Compliance', () => {
   // Fixture for a standard breadcrumb block
   const setupBlock = async () => {
     const element = await fixture(html`
-      <div class="breadcrumb">
-        <ul>
-          <li><a href="/link1">Home</a></li>
-          <li><a href="/link2">Category</a></li>
-          <li>Current Page</li>
-        </ul>
+      <div>
+        <button id="pre-focus-button">Start</button>
+        <div class="breadcrumb">
+          <ul>
+            <li><a href="/link1">Home</a></li>
+            <li><a href="/link2">Category</a></li>
+            <li>Current Page</li>
+          </ul>
+        </div>
       </div>
     `);
-    block = element;
+    block = element.querySelector('.breadcrumb');
     decorate(block);
   };
 
@@ -207,6 +211,12 @@ describe('Breadcrumb WCAG Compliance', () => {
         await expect(block).to.be.accessible({
           runOnly: { type: 'rule', values: ['color-contrast'] },
         });
+
+        await emulateMedia({ colorScheme: 'dark' });
+        await expect(block).to.be.accessible({
+          runOnly: { type: 'rule', values: ['color-contrast'] },
+        });
+        await emulateMedia({ colorScheme: 'light' });
       });
 
       it('1.4.4 Resize text (Level AA)', async () => {
@@ -228,8 +238,24 @@ describe('Breadcrumb WCAG Compliance', () => {
       });
 
       it('1.4.6 Contrast (Enhanced) (Level AAA)', async () => {
-        await emulateMedia({ forcedColors: 'active' });
         await setupBlock();
+
+        // Test with more contrast
+        await emulateMedia({ contrast: 'more' });
+        await expect(block).to.be.accessible({
+          runOnly: { type: 'rule', values: ['wcag2aaa'] },
+        });
+        await emulateMedia({ contrast: 'no-preference' });
+
+        // Test with dark mode
+        await emulateMedia({ colorScheme: 'dark' });
+        await expect(block).to.be.accessible({
+          runOnly: { type: 'rule', values: ['wcag2aaa'] },
+        });
+        await emulateMedia({ colorScheme: 'light' });
+
+        // Test with forced colors
+        await emulateMedia({ forcedColors: 'active' });
         await expect(block).to.be.accessible({
           runOnly: { type: 'tag', values: ['wcag2aaa'] },
         });
@@ -392,11 +418,22 @@ describe('Breadcrumb WCAG Compliance', () => {
 
       it('2.4.7 Focus Visible (Level AA)', async () => {
         await setupBlock();
+        // Fix for simulated WebKit browsers that don't properly focus links
+        if (navigator.userAgent.includes('WebKit')) {
+          const anchors = [...block.querySelectorAll('a')];
+          anchors.forEach((anchor) => {
+            anchor.setAttribute('tabindex', '0');
+          });
+        }
         const link = block.querySelector('a');
-        const initialOutline = window.getComputedStyle(link).outline;
-        link.focus();
-        const focusedOutline = window.getComputedStyle(link).outline;
-        expect(initialOutline).to.not.equal(focusedOutline, 'A visible focus indicator must be present.');
+        const { defaultState, focusState } = await getFocusStyles(link);
+        const hasStyleChanged = defaultState.outline !== focusState.outline
+          || defaultState.border !== focusState.border
+          || defaultState.boxShadow !== focusState.boxShadow
+          || defaultState.backgroundColor !== focusState.backgroundColor;
+
+        // eslint-disable-next-line no-unused-expressions
+        expect(hasStyleChanged, 'A visible focus indicator must be present.').to.be.true;
       });
 
       it.skip('2.4.8 Location (Level AAA)', () => {
@@ -424,10 +461,35 @@ describe('Breadcrumb WCAG Compliance', () => {
         // better suited for visual regression or manual testing.
       });
 
-      it.skip('2.4.13 Focus Appearance (Level AAA)', () => {
-        // N/A: This is an advanced test requiring color contrast analysis
-        // of the focus indicator against its background and ensuring it meets
-        // size requirements. This is better suited for manual or E2E testing.
+      it('2.4.13 Focus Appearance (Level AAA)', async () => {
+        await setupBlock();
+        const link = block.querySelector('a');
+
+        const initialMetrics = getFocusIndicatorMetrics(link);
+
+        // Focus the element using a keyboard-like interaction
+        link.focus();
+        await nextFrame();
+
+        const focusedMetrics = getFocusIndicatorMetrics(link);
+
+        const outlineChanged = initialMetrics.outlineWidth !== focusedMetrics.outlineWidth;
+        const borderChanged = initialMetrics.borderWidth !== focusedMetrics.borderWidth;
+        const backgroundChanged = initialMetrics.backgroundColor !== focusedMetrics.backgroundColor;
+        const focusIndicatorThickness = focusedMetrics.outlineWidth + focusedMetrics.borderWidth;
+
+        // Assertion 1: A visible change must occur.
+        expect(outlineChanged || borderChanged || backgroundChanged, 'A visual focus indicator must be present.').to.be.true;
+
+        // Assertion 2: The indicator must be at least 2px thick if using outline/border.
+        if (outlineChanged || borderChanged) {
+          expect(focusIndicatorThickness).to.be.at.least(2, 'Focus indicator thickness should be at least 2px.');
+        }
+
+        // Assertion 3: Use axe to check non-text contrast as a proxy for the contrast requirement.
+        await expect(block).to.be.accessible({
+          runOnly: { type: 'rule', values: ['non-text-contrast'] },
+        });
       });
     });
 

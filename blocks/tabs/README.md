@@ -1,48 +1,64 @@
 # Tabs Block
 
-The `tabs` block creates a WCAG-compliant tabs interface. It's designed with **progressive enhancement** in mind, meaning it's fully functional and accessible as a simple list of in-page links even if JavaScript is disabled. The entire component is authored using a single table.
+> A component that organizes content into multiple views within the same space, allowing users to switch between them without leaving the page.
 
-## Authoring Guide
+This block provides an accessible and flexible way to present complex information in a compact format.
 
-The `tabs` block is authored using a table with a single column. Each row in the table corresponds to a specific part of the tabs component.
+## Authoring
 
--   **Row 1**: Defines the tab navigation. This must be a list of links. The text of each link becomes a tab's title, and the link's `href` should point to the ID of the corresponding content panel.
--   **Row 2**: Contains the content for the **first** tab. For the non-JavaScript fallback to work correctly, this row must contain an element (typically a heading) with an `id` that exactly matches the `href` of the first tab link.
--   **Row 3**: Contains the content for the **second** tab, with its own matching `id`.
--   ...and so on for all subsequent tabs.
+Create a `(tabs)` block. Each row in the source table represents a tab and its corresponding panel content.
 
-### Basic Tabs
+### Structure
 
-This is the recommended structure. It provides the best accessibility and gracefully degrades without JavaScript. AEM will automatically generate IDs from heading text. Make sure your link's `href` matches the generated ID (e.g., a heading "Product Features" becomes `id="product-features"`).
+| (tabs)                 |
+| :--------------------- |
+| Tab List (a `<ul>` or `<ol>`) |
+| Panel 1 Content        |
+| Panel 2 Content        |
+| ...                    |
 
-**Authoring Structure (in a document):**
+*   **Tab List:** The first cell must contain a list of links. The link's text becomes the tab's title, and the `href` points to the panel's ID (e.g., `#panel-1`).
+*   **Panel Content:** Subsequent cells contain the content for each panel. For asynchronous loading, this cell should contain a single link to a `.plain.html` document.
 
-| tabs                                    |
-|-----------------------------------------|
-| - [Product Features](#product-features)<br> - [Customer Reviews](#customer-reviews) |
-| ### Product Features<br>This is the content for the first panel. You can add any other content or blocks here. |
-| ### Customer Reviews<br>This is the content for the second panel. |
+## Block Options / Variants
 
-### Asynchronous Tabs
+*   **(Manual):** Add `(manual)` to the block name to require users to activate a tab with `Enter` or `Space` in addition to arrow key navigation. By default, tabs activate automatically on focus.
+*   **Default Active Tab**: To make a tab active by default on page load, make its title **bold** or *italic* in the source document. This will be overridden if the URL has a hash that links to a specific tab.
 
-For better performance, panel content can be loaded on-demand when a user selects a tab. To do this, place a single link to a `.plain.html` page in that tab's corresponding content row.
+## Features
 
-**Authoring Structure:**
+*   The component automatically adapts to the user's operating system settings for light and dark mode.
+*   Converts a standard list of links into a WAI-ARIA compliant tabbed interface.
+*   Fully keyboard-navigable, supporting `ArrowLeft`/`ArrowRight`, `Home`, and `End` keys.
+*   Supports both automatic activation (default) and manual activation modes.
+*   Lazy-loads panel content from other pages for improved performance.
+*   Deep-linking support: arriving on the page with a hash that points to a tab panel or content within it will automatically activate the correct tab.
+*   Respects user's OS-level high-contrast and reduced motion settings.
 
-| tabs                                |
-|-------------------------------------|
-| - [Our Mission](#our-mission)<br>- [Contact Us](#contact-us)         |
-| ### Our Mission<br> This content is loaded immediately. |
-| [/contact.plain.html]               |
+## Accessibility Features
 
-### Additional Options
+*   **ARIA Roles:** Implements the complete ARIA tabs pattern with `role="tablist"`, `role="tab"`, `role="tabpanel"`, and the necessary state attributes (`aria-selected`, `aria-controls`, `aria-labelledby`).
+*   **Keyboard Navigation:**
+    *   **Default (Automatic Activation):**
+        *   `ArrowRight` / `ArrowDown`: Moves focus to and activates the next tab.
+        *   `ArrowLeft` / `ArrowUp`: Moves focus to and activates the previous tab.
+    *   **Manual Activation (`(manual)` variant):**
+        *   `ArrowRight` / `ArrowDown`: Moves focus to the next tab without activating it.
+        *   `ArrowLeft` / `ArrowUp`: Moves focus to the previous tab without activating it.
+        *   `Enter` / `Space`: Activates the currently focused tab.
+    *   **Common Controls (Both Modes):**
+        *   `Tab`: Moves focus from a tab into the active panel. If in the panel, moves focus out of the component.
+        *   `Shift+Tab`: Moves focus from a panel back to its controlling tab.
+        *   `Home` / `End`: Moves focus to the first and last tabs, respectively.
+*   **WCAG Conformance:** Designed to meet key criteria including `1.3.1 Info and Relationships`, `1.4.10 Reflow`, `2.1.1 Keyboard`, `2.4.7 Focus Visible`, and `4.1.2 Name, Role, Value`.
 
-#### Manual Activation
+## For Developers
 
-By default, tabs are activated as soon as they receive focus via arrow keys. To require users to press `Enter` or `Space` to activate a tab, add the `(manual)` style to the `tabs` block name.
-
-**Authoring Structure:**
-
-| tabs (manual)                       |
-|-------------------------------------|
-| ...                                 |
+*   **File Structure:**
+    *   `blocks/tabs/tabs.js`
+    *   `blocks/tabs/tabs.css`
+*   **CSS Custom Properties:**
+    *   `--tab-border-color`: The color of borders.
+    *   `--tab-border-color-active`: The color of the active tab's indicator.
+    *   `--tab-background-hover`: The background color on hover.
+    *   `--tab-focus-outline-color`: The color of the focus outline.
