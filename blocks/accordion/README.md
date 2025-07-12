@@ -1,50 +1,78 @@
-# Accordion Block
+# Accordion
 
-> A vertically stacked set of interactive headings that each contain a title, content, and an associated collapsible panel, built upon the native `<details>` and `<summary>` elements.
+The accordion block allows users to show and hide sections of related content, making it easy to present large amounts of information in a compact space.
 
-Accordions are a common way to organize and condense long-form content, allowing users to scan topics and expand only the sections they are interested in. This implementation uses semantic HTML for a robust and accessible foundation.
+![Accordion Demo](./README-assets/accordion-demo.gif)
 
-The accordion block creates a vertically collapsing set of panels. It can be authored in two ways, which are detected automatically:
+## Features
 
-1.  **Stacked Layout:** A single-column table where heading and content panels alternate on new rows.
-2.  **Two-Column Layout:** A two-column table where the first column is the heading and the second is the content.
+*   **Semantic & Accessible**: Built with native `<details>` and `<summary>` elements for maximum accessibility and robustness.
+*   **Two Layouts**: Can be displayed in a standard stacked layout or a two-column layout.
+*   **Two Selection Modes**: Supports both "single-select" (only one panel can be open at a time) and "multi-select" modes.
+*   **Full Keyboard Navigation**: Follows the ARIA pattern for accordions, including support for `ArrowDown`, `ArrowUp`, `Home`, and `End` keys.
+*   **Deep Linking**: Users can link directly to a specific accordion item, which will be automatically expanded on page load.
+*   **Default Open State**: Authors can specify one or more items to be open by default.
 
-### Authoring
+## Authoring Guide
 
-To author an accordion, create a block with the name `accordion`.
+To use the accordion block, create a new block in AEM's document-based authoring and choose "Accordion".
 
-**Stacked Layout Example:**
+### Stacked Layout (Default)
 
-| accordion          |
-|--------------------|
-| Heading for Item 1 |
-| Content for Panel 1|
-| Heading for Item 2 |
-| Content for Panel 2|
-| ...                |
+For a standard vertical accordion, create a two-column table. The first column contains the heading for an item, and the second column contains the panel content.
 
-**Two-Column Layout Example:**
+| Accordion | |
+|---|---|
+| First Question  | Panel 1 Content |
+| Second Question | Panel 2 Content |
+| Third Question  | Panel 3 Content |
 
-| accordion          |                    |
-|--------------------|--------------------|
-| Heading for Item 1 | Content for Panel 1|
-| Heading for Item 2 | Content for Panel 2|
-| ...                | ...                |
+### Two-Column Layout
 
-*   For accessibility, the heading cell should contain a proper heading element (e.g., `<h3>`, `<h4>`) whose level fits the page's document outline.
+For a side-by-side layout, add the "(Columns)" style to the block and structure your content in a two-column table.
 
-### Options / Variants
+| Accordion (Columns) | |
+|---|---|
+| First Question  | Panel 1 Content |
+| Second Question | Panel 2 Content |
+| Third Question  | Panel 3 Content |
 
-*   **Multi-select:** Add the `multi-select` class to the block to allow multiple accordion items to be open simultaneously.
-*   **Default Open:** To make an accordion item open by default, make its heading text **bold** or *italic* in the source document.
+### Multi-Select Mode
 
-### Features
-*   The component automatically adapts to the user's operating system settings for light and dark mode.
-*   Built with semantic `<details>` and `<summary>` elements for native browser accessibility and functionality.
-*   Fully keyboard-navigable, enhancing the native behavior with Arrow Key, Home, and End support.
-*   Supports both single-select (default) and multi-select modes.
-*   Adapts to user's OS-level high-contrast and reduced motion settings.
-*   Deep-linking support: arriving on the page with a hash that matches a heading ID will automatically expand that section.
+To allow multiple panels to be open simultaneously, add the "(Multi-Select)" style to the block.
 
-### Deep Linking
-The accordion supports deep linking. If the URL hash (`#`) matches the ID of a heading within an accordion, that item will automatically be opened on page load.
+| Accordion (Multi-Select) | |
+|---|---|
+| ... | ... |
+
+### Default Open State
+
+To make an accordion item open by default on page load, simply wrap its heading in `<strong>` or `<em>` tags.
+
+| Accordion | |
+|---|---|
+| `<strong>First Question</strong>` | This panel will be open by default. |
+| `<em>Second Question</em>`  | This panel will also be open by default. |
+| Third Question | This panel will be closed. |
+
+## Accessibility Implementation
+
+The accordion block is designed to be fully compliant with WCAG 2.2 AA standards.
+
+*   **Semantic HTML**: Uses `<details>` and `<summary>` elements, which have built-in accessibility for state management (open/closed) and keyboard interaction.
+*   **Keyboard Navigation**:
+    *   `Tab`: Moves focus to the next accordion header.
+    *   `Enter` or `Space`: Toggles the open/closed state of the currently focused panel.
+    *   `ArrowDown` / `ArrowUp`: Moves focus between accordion headers.
+    *   `Home`: Moves focus to the first accordion header.
+    *   `End`: Moves focus to the last accordion header.
+*   **ARIA Attributes**: No explicit ARIA roles (e.g., `role="button"`) are needed because the native semantics of `<summary>` are sufficient and more robust.
+
+## Theming
+
+The accordion block can be styled by targeting its CSS classes and using the available CSS Custom Properties.
+
+| CSS Custom Property | Description | Default Value |
+|---|---|---|
+| `--accordion-border-color` | The color of the border between accordion items. | `#ccc` |
+| `--accordion-focus-outline-color` | The color of the focus outline on the summary. | `blue` |

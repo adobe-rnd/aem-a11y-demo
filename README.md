@@ -1,34 +1,39 @@
-# Your Project's Title...
-Your project's description...
+# AEM Accessible Blocks Library
 
-## Environments
-- Preview: https://main--{repo}--{owner}.aem.page/
-- Live: https://main--{repo}--{owner}.aem.live/
+> A collection of production-ready, accessible, and high-performance AEM blocks for Franklin projects.
 
-## Documentation
+This project serves as a demonstration and a source of truth for building AEM blocks that are not only feature-rich but also conform to the highest standards of web accessibility and performance.
 
-Before using the aem-boilerplate, we recommand you to go through the documentation on https://www.aem.live/docs/ and more specifically:
-1. [Developer Tutorial](https://www.aem.live/developer/tutorial)
-2. [The Anatomy of a Project](https://www.aem.live/developer/anatomy-of-a-project)
-3. [Web Performance](https://www.aem.live/developer/keeping-it-100)
-4. [Markup, Sections, Blocks, and Auto Blocking](https://www.aem.live/developer/markup-sections-blocks)
+## Core Principles
 
-## Installation
+We design and build our components based on these foundational principles:
 
-```sh
-npm i
-```
+*   **Accessibility First**: Every component is built to meet or exceed WCAG 2.2 AA and AAA guidelines.
+    *   **User-Adaptive:** Components respect and adapt to the user's OS-level preferences, such as `prefers-reduced-motion` and `forced-colors` for Windows High Contrast Mode.
+    *   **Auditable:** We provide a comprehensive, per-criterion test suite for each block to validate its conformance.
+*   **Performance by Default**: Components are optimized for Core Web Vitals. Techniques like asynchronous content loading are used to ensure a fast user experience.
+*   **Intuitive Authoring**: Blocks are designed to be easily and intuitively authored in AEM's document-based authoring environment.
+*   **Developer Friendly**: Code is modern, clean, and well-documented to encourage collaboration and extension.
+    *   **Themeable:** Components are easily configured and styled using CSS Custom Properties, allowing for flexible integration into any design system.
 
-## Linting
+## Available Components
 
-```sh
-npm run lint
-```
+Below is the list of currently available, production-ready blocks. Each component includes detailed documentation on its features, authoring, and accessibility implementation.
 
-## Local development
+| Component | Description | Documentation |
+| :--- | :--- | :--- |
+| **Accordion** | A component that allows users to show and hide sections of related content. | [View README](./blocks/accordion/README.md) |
+| **Breadcrumb** | A navigational aid that shows the user's location within the site's hierarchy. | [View README](./blocks/breadcrumb/README.md) |
+| **Tabs** | A component that organizes content into multiple views within the same space. Supports manual/automatic activation and asynchronous loading. | [View README](./blocks/tabs/README.md) |
 
-1. Create a new repository based on the `aem-boilerplate` template and add a mountpoint in the `fstab.yaml`
-1. Add the [AEM Code Sync GitHub App](https://github.com/apps/aem-code-sync) to the repository
-1. Install the [AEM CLI](https://github.com/adobe/helix-cli): `npm install -g @adobe/aem-cli`
-1. Start AEM Proxy: `aem up` (opens your browser at `http://localhost:3000`)
-1. Open the `{repo}` directory in your favorite IDE and start coding :)
+## Getting Started
+
+To use a component from this library in your own Franklin project:
+
+1.  Copy the component's folder from `blocks/` into your project's `blocks/` directory.
+2.  Ensure you have the necessary dependencies and helper files if any are noted in the component's `README.md`.
+3.  Follow the authoring guide in the component's `README.md` to add it to your pages.
+
+## Contributing
+
+We welcome contributions! Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.

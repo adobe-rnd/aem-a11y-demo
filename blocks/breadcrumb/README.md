@@ -1,44 +1,41 @@
-# Breadcrumb Block
+# Breadcrumb
 
-> A navigational aid that shows the user's location within the site's hierarchy, improving orientation and findability.
-
-An accessible breadcrumb trail helps users understand where they are and provides a quick way to navigate to parent pages.
-
-## Authoring
-
-To create a breadcrumb, make a `(breadcrumb)` block and add a single unordered (`<ul>`) or ordered (`<ol>`) list of links inside it. The last item in the list should be the current page and should ideally not be a link.
-
-| (breadcrumb)                        |
-| :---------------------------------- |
-| `<ul>` or `<ol>` with list items. |
-
-**Example:**
-```html
-<ul>
-  <li><a href="/">Home</a></li>
-  <li><a href="/section/">Section</a></li>
-  <li>Current Page</li>
-</ul>
-```
+The breadcrumb block provides a navigational aid that shows the user's location within the site's hierarchy, helping them understand and navigate the site structure.
 
 ## Features
 
-*   Automatically converts the source list into a structured navigation landmark.
-*   Injects visual separators that are hidden from assistive technology.
-*   Correctly identifies the current page by marking it with `aria-current="page"`, even if it's authored as a link to the current page.
-*   The last item in the list is automatically identified as the current page with `aria-current="page"`.
-*   Separators are added via CSS and hidden from assistive technologies.
-*   The component automatically adapts to the user's operating system settings for light and dark mode.
+*   **Accessible by Design**: Automatically wraps the component in a `<nav>` element with an `aria-label="breadcrumb"` and uses an ordered list (`<ol>`) to convey the hierarchical structure.
+*   **Current Page Identification**: The last item in the breadcrumb is automatically identified as the current page with `aria-current="page"`.
+*   **Flexible Authoring**: Can be authored as either an unordered (`<ul>`) or ordered (`<ol>`) list in the source document.
 
-## Accessibility Features
+## Authoring Guide
 
-*   **Structure:** Wraps the component in a `<nav>` landmark with `aria-label="breadcrumb"` for easy identification by screen readers. The list of links is converted to an `<ol>` to programmatically convey the sequential nature of the path.
-*   **Current Page Identification:** The last item in the list is always marked with `aria-current="page"` to clearly indicate the user's current location.
-*   **Keyboard Navigation:** Follows standard link-based navigation (`Tab` to move between links, `Enter` to activate).
-*   **WCAG Conformance:** Designed to meet key criteria including `1.3.1 Info and Relationships`, `1.3.2 Meaningful Sequence`, `1.4.10 Reflow`, and `2.4.7 Focus Visible`.
+To use the breadcrumb block, create a new block in AEM's document-based authoring and choose "Breadcrumb".
 
-## For Developers
+The breadcrumb is authored as a simple list (either ordered or unordered). Each list item represents a level in the site's hierarchy.
 
-*   **File Structure:**
-    *   `blocks/breadcrumb/breadcrumb.js`
-    *   `blocks/breadcrumb/breadcrumb.css` 
+| Breadcrumb |
+|---|
+| <ul><li><a href="/us/en/products">Products</a></li><li><a href="/us/en/products/creative-cloud">Creative Cloud</a></li><li>Photoshop</li></ul> |
+
+*   The last item should typically not be a link, as it represents the current page.
+*   If the last item is a link that points to the current page, `aria-current="page"` will still be correctly applied.
+
+## Accessibility Implementation
+
+The breadcrumb block is designed to be fully compliant with WCAG 2.2 AA standards.
+
+*   **Landmark Navigation**: The component is wrapped in a `<nav>` landmark with an `aria-label` of "breadcrumb", making it easy for screen reader users to find and understand its purpose.
+*   **Ordered Structure**: The list is converted to an `<ol>` to programmatically convey that the items are in a specific, hierarchical order.
+*   **Current Page State**: The last item is marked with `aria-current="page"` to clearly indicate the user's current location to assistive technologies.
+*   **Separator Handling**: The visual separators (e.g., '>') added via CSS are hidden from screen readers with `aria-hidden="true"` to prevent them from being announced, reducing auditory clutter.
+
+## Theming
+
+The breadcrumb block can be styled by targeting its CSS classes and using the available CSS Custom Properties.
+
+| CSS Custom Property | Description | Default Value |
+|---|---|---|
+| `--breadcrumb-separator-color` | The color of the separator icon. | `#505050` |
+| `--breadcrumb-link-color` | The color for breadcrumb links. | `#1473E6` |
+| `--breadcrumb-current-color` | The color for the current page text. | `#505050` | 

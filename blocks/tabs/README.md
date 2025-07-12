@@ -1,64 +1,68 @@
-# Tabs Block
+# Tabs
 
-> A component that organizes content into multiple views within the same space, allowing users to switch between them without leaving the page.
+The tabs block is a component that organizes content into multiple views within the same space, allowing users to switch between them.
 
-This block provides an accessible and flexible way to present complex information in a compact format.
-
-## Authoring
-
-Create a `(tabs)` block. Each row in the source table represents a tab and its corresponding panel content.
-
-### Structure
-
-| (tabs)                 |
-| :--------------------- |
-| Tab List (a `<ul>` or `<ol>`) |
-| Panel 1 Content        |
-| Panel 2 Content        |
-| ...                    |
-
-*   **Tab List:** The first cell must contain a list of links. The link's text becomes the tab's title, and the `href` points to the panel's ID (e.g., `#panel-1`).
-*   **Panel Content:** Subsequent cells contain the content for each panel. For asynchronous loading, this cell should contain a single link to a `.plain.html` document.
-
-## Block Options / Variants
-
-*   **(Manual):** Add `(manual)` to the block name to require users to activate a tab with `Enter` or `Space` in addition to arrow key navigation. By default, tabs activate automatically on focus.
-*   **Default Active Tab**: To make a tab active by default on page load, make its title **bold** or *italic* in the source document. This will be overridden if the URL has a hash that links to a specific tab.
+![Tabs Demo](./README-assets/tabs-demo.gif)
 
 ## Features
 
-*   The component automatically adapts to the user's operating system settings for light and dark mode.
-*   Converts a standard list of links into a WAI-ARIA compliant tabbed interface.
-*   Fully keyboard-navigable, supporting `ArrowLeft`/`ArrowRight`, `Home`, and `End` keys.
-*   Supports both automatic activation (default) and manual activation modes.
-*   Lazy-loads panel content from other pages for improved performance.
-*   Deep-linking support: arriving on the page with a hash that points to a tab panel or content within it will automatically activate the correct tab.
-*   Respects user's OS-level high-contrast and reduced motion settings.
+*   **Accessible ARIA Patterns**: Implements the `tab`, `tablist`, and `tabpanel` ARIA design pattern for assistive technologies.
+*   **Two Activation Modes**: Supports both "Automatic" activation (switching tabs as soon as they receive focus) and "Manual" activation (requiring an `Enter` or `Space` key press).
+*   **Asynchronous Content Loading**: Panels can be configured to load their content on demand from another page, improving initial page load performance.
+*   **Full Keyboard Navigation**: Follows the ARIA pattern for tabs, including support for `ArrowRight`, `ArrowLeft`, `Home`, and `End` keys.
+*   **Deep Linking**: Users can link directly to a specific tab, which will be automatically opened on page load.
+*   **Default Open State**: Authors can specify a tab to be open by default.
 
-## Accessibility Features
+## Authoring Guide
 
-*   **ARIA Roles:** Implements the complete ARIA tabs pattern with `role="tablist"`, `role="tab"`, `role="tabpanel"`, and the necessary state attributes (`aria-selected`, `aria-controls`, `aria-labelledby`).
-*   **Keyboard Navigation:**
-    *   **Default (Automatic Activation):**
-        *   `ArrowRight` / `ArrowDown`: Moves focus to and activates the next tab.
-        *   `ArrowLeft` / `ArrowUp`: Moves focus to and activates the previous tab.
-    *   **Manual Activation (`(manual)` variant):**
-        *   `ArrowRight` / `ArrowDown`: Moves focus to the next tab without activating it.
-        *   `ArrowLeft` / `ArrowUp`: Moves focus to the previous tab without activating it.
-        *   `Enter` / `Space`: Activates the currently focused tab.
-    *   **Common Controls (Both Modes):**
-        *   `Tab`: Moves focus from a tab into the active panel. If in the panel, moves focus out of the component.
-        *   `Shift+Tab`: Moves focus from a panel back to its controlling tab.
-        *   `Home` / `End`: Moves focus to the first and last tabs, respectively.
-*   **WCAG Conformance:** Designed to meet key criteria including `1.3.1 Info and Relationships`, `1.4.10 Reflow`, `2.1.1 Keyboard`, `2.4.7 Focus Visible`, and `4.1.2 Name, Role, Value`.
+To use the tabs block, create a block in AEM's document-based authoring and choose "Tabs". The block is authored as a single-column table.
 
-## For Developers
+*   **Row 1: Tab List**: The first row must contain a list (`<ul>` or `<ol>`) of links. The text of each link becomes the tab heading, and the link's `href` must be a hash that points to the ID of the corresponding panel `div` (e.g., `#panel-1`).
+*   **Subsequent Rows: Panels**: Each subsequent row contains a `div` for a panel. This `div` must have an `id` that matches the hash from the corresponding tab link.
 
-*   **File Structure:**
-    *   `blocks/tabs/tabs.js`
-    *   `blocks/tabs/tabs.css`
-*   **CSS Custom Properties:**
-    *   `--tab-border-color`: The color of borders.
-    *   `--tab-border-color-active`: The color of the active tab's indicator.
-    *   `--tab-background-hover`: The background color on hover.
-    *   `--tab-focus-outline-color`: The color of the focus outline.
+| Tabs |
+|---|
+| <ul><li><a href="#panel-1">Tab 1</a></li><li><a href="#panel-2">Tab 2</a></li></ul> |
+| <div id="panel-1">Content for the first panel.</div> |
+| <div id="panel-2">Content for the second panel.</div> |
+
+
+### Manual Activation
+
+To require users to press `Enter` or `Space` to switch tabs (instead of automatically switching on arrow key navigation), add the "(Manual)" style to the block name in the table header.
+
+### Default Open State
+
+To make a tab open by default on page load, simply wrap its text in the list item in `<strong>` or `<em>` tags.
+
+### Asynchronous Content
+
+To load panel content from another page, the panel's `div` should contain only a single link to the other page. The block will automatically fetch the content from the `main` section of the linked page and replace the link.
+
+| Tabs |
+|---|
+| ... (tab list) ... |
+| <div id="panel-remote"><a href="/path/to/other-page"></a></div> |
+
+## Accessibility Implementation
+
+The tabs block is designed to be fully compliant with WCAG 2.2 AA standards.
+
+*   **ARIA Roles**: Uses `role="tablist"`, `role="tab"`, and `role="tabpanel"` to define the relationship between elements.
+*   **State Management**: Uses `aria-selected`, `aria-controls`, and `aria-labelledby` to programmatically link tabs to their panels and indicate the current state.
+*   **Keyboard Navigation**:
+    *   `Tab`: When focus is on a tab, `Tab` moves focus to the active tab panel. Within a panel, it moves to the next focusable element.
+    *   `Shift+Tab`: When focus is on the first element in a panel, `Shift+Tab` moves focus back to the associated tab.
+    *   `ArrowRight` / `ArrowLeft`: Moves focus between tabs. In automatic activation mode, this also switches the visible panel.
+    *   `Home` / `End`: Moves focus to the first or last tab, respectively.
+*   **Async State**: Uses `aria-busy="true"` on panels during asynchronous loading to inform assistive technologies that the content is updating.
+
+## Theming
+
+The tabs block can be styled by targeting its CSS classes and using the available CSS Custom Properties.
+
+| CSS Custom Property | Description | Default Value |
+|---|---|---|
+| `--tab-border-color` | The color of the border on the tab list. | `#ccc` |
+| `--tab-active-border-color` | The color of the border on the active tab. | `blue` |
+| `--tab-focus-outline-color` | The color of the focus outline on a tab. | `blue` |
