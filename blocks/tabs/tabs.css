@@ -116,6 +116,7 @@
     border: none;
     color: ButtonText;
     background-color: ButtonFace;
+    forced-color-adjust: preserve-parent-color;
   }
 
   .tabs [role="tab"]:hover {

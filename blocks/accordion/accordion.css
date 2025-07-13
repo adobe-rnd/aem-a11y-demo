@@ -76,6 +76,14 @@
     outline-color: Highlight;
   }
 
+  .accordion summary * {
+    forced-color-adjust: preserve-parent-color;
+  }
+
+  .accordion summary::marker {
+    forced-color-adjust: preserve-parent-color;
+  }
+
   .accordion summary:hover,
   .accordion summary:focus-visible,
   .accordion details[open] > summary {
