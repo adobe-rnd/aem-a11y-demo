@@ -55,3 +55,49 @@ export function getFocusableElements(element) {
   }
   return Array.from(element.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), details, [tabindex]:not([tabindex="-1"])'));
 }
+
+/**
+ * Creates and injects skip links for major page landmarks.
+ * This is an essential accessibility feature for keyboard-only and screen reader users.
+ * @param {Array<Object>} links - An array of link objects, each with a `href` selector and `text`.
+ * @param {Document|Element} [scope=document] - The scope within which to find the target elements.
+ */
+export function createSkipLinks(links, scope = document) {
+  const container = document.createElement('div');
+  container.className = 'skip-links';
+
+  links.forEach((link) => {
+    // The href should be a selector for the target element
+    const target = scope.querySelector(link.href);
+    if (target) {
+      // Ensure the target can be programmatically focused.
+      // A tabindex of -1 allows for focus via script but not via keyboard tabbing.
+      if (!target.hasAttribute('tabindex')) {
+        target.tabIndex = -1;
+      }
+
+      // Ensure the target has an ID to be linked to.
+      if (!target.id) {
+        // Create a simple, predictable ID from the selector if one doesn't exist.
+        target.id = link.href.replace(/[#.]/g, '');
+      }
+
+      const skipLink = document.createElement('a');
+      skipLink.className = 'skip-link';
+      skipLink.href = `#${target.id}`;
+      skipLink.textContent = link.text;
+
+      // When the link is clicked, it moves focus to the target element.
+      // The default link behavior handles the view jump.
+      skipLink.addEventListener('click', () => {
+        target.focus();
+      });
+
+      container.append(skipLink);
+    }
+  });
+
+  if (container.childElementCount > 0) {
+    scope.prepend(container);
+  }
+}

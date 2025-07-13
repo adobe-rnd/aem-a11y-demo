@@ -13,6 +13,7 @@ import {
   loadCSS,
   toCamelCase,
 } from './aem.js';
+import { createSkipLinks } from './a11y-core.js';
 
 /**
  * Gets placeholders object.
@@ -105,6 +106,10 @@ export function decorateMain(main) {
   buildAutoBlocks(main);
   decorateSections(main);
   decorateBlocks(main);
+  // Add skip links
+  createSkipLinks([
+    { href: 'main', text: 'Skip to main content' },
+  ]);
 }
 
 /**
@@ -146,6 +151,8 @@ async function loadLazy(doc) {
   loadHeader(doc.querySelector('header'));
   loadFooter(doc.querySelector('footer'));
 
+  // Load accessibility-specific styles
+  loadCSS(`${window.hlx.codeBasePath}/styles/a11y-core.css`);
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
   loadFonts();
 }

@@ -1,0 +1,77 @@
+/* Centralized styles for accessibility-related components */
+
+:root {
+  --skip-link-background-color: #005a9c;
+  --skip-link-text-color: #fff;
+  --skip-link-border-width: 2px;
+  --skip-link-focus-outline-color: var(--link-color, #005A9C);
+  --skip-link-spacing-m: .5em;
+  --skip-link-spacing-l: 1em;
+}
+
+.skip-links a.skip-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--skip-link-background-color);
+  color: var(--skip-link-text-color);
+  padding: var(--skip-link-spacing-m) var(--skip-link-spacing-l);
+  z-index: 9999;
+
+  /* Hide the link off-screen until it's focused */
+  transform: translateY(-120%);
+  transition: transform 0.2s ease-in-out;
+}
+
+.skip-links a.skip-link:focus {
+  transform: translateY(0%);
+}
+
+.skip-links a.skip-link:focus-visible {
+  outline: var(--skip-link-border-width) solid var(--skip-link-focus-outline-color);
+  outline-offset: var(--skip-link-border-width);
+}
+
+/* Ensure main content has a visible focus outline when targeted by a skip link */
+main:focus-visible,
+main:focus {
+  outline: var(--skip-link-border-width) solid var(--skip-link-focus-outline-color);
+  outline-offset: var(--skip-link-border-width);
+}
+
+/* Dark Mode styles */
+@media (prefers-color-scheme: dark) {
+  .skip-links {
+    --skip-link-background-color: var(--link-color, #9cdcfe);
+    --skip-link-text-color: var(--background-color, #121212);
+    --skip-link-focus-outline-color: var(--link-color, #9cdcfe);
+  }
+}
+
+/* Respect user's preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .skip-links a.skip-link {
+    transition: none;
+  }
+}
+
+/* Adapt styles for Windows High Contrast Mode */
+@media (forced-colors: active) {
+  .skip-links {
+    background-color: Canvas;
+  }
+
+  .skip-links a.skip-link:focus {
+    background-color: Highlight;
+    color: HighlightText;
+
+    /* Forcing a border ensures visibility against any background */
+    border-color: Highlight;
+    forced-color-adjust: preserve-parent-color;
+  }
+
+  main:focus-visible,
+  main:focus {
+    outline-color: Highlight;
+  }
+} 
