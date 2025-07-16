@@ -106,3 +106,32 @@ export function getFocusIndicatorMetrics(element) {
     backgroundColor,
   };
 }
+
+const stubs = new Map();
+
+/**
+ * Stubs a method on an object.
+ * @param {object} obj The object.
+ * @param {string} method The method name.
+ * @param {function} newMethod The new method.
+ */
+export function stubMethod(obj, method, newMethod) {
+  const originalMethod = obj[method];
+  stubs.set(obj, { method, originalMethod });
+  // eslint-disable-next-line no-param-reassign
+  obj[method] = newMethod;
+}
+
+/**
+ * Unstubs a method on an object.
+ * @param {object} obj The object.
+ * @param {string} method The method name.
+ */
+export function unstubMethod(obj, method) {
+  const stub = stubs.get(obj);
+  if (stub && stub.method === method) {
+    // eslint-disable-next-line no-param-reassign
+    obj[method] = stub.originalMethod;
+    stubs.delete(obj);
+  }
+}

@@ -28,9 +28,10 @@
     "@anthropic-ai/claude-code": "1.0.53",
     "@axe-core/playwright": "^4.9.1",
     "@babel/eslint-parser": "7.28.0",
+    "@esm-bundle/chai": "^4.3.4-fix.0",
     "@lhci/cli": "^0.15.1",
     "@open-wc/testing": "^4.0.0",
-    "@playwright/test": "^1.45.1",
+    "@playwright/test": "^1.54.1",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@web/dev-server-esbuild": "^1.0.4",
     "@web/dev-server-rollup": "^0.6.4",
@@ -51,7 +52,6 @@
     "jsdom": "^26.0.0",
     "lighthouse": "^12.1.0",
     "mocha": "^11.0.0",
-    "sinon": "^21.0.0",
     "start-server-and-test": "^2.0.12",
     "stylelint": "16.21.1",
     "stylelint-config-standard": "38.0.0"
@@ -66,8 +66,5 @@
   "bugs": {
     "url": "https://github.com/adobe-rnd/aem-a11y-demo/issues"
   },
-  "homepage": "https://github.com/adobe-rnd/aem-a11y-demo#readme",
-  "dependencies": {
-    "aem-a11y-lib": "file:../aem-a11y-lib"
-  }
+  "homepage": "https://github.com/adobe-rnd/aem-a11y-demo#readme"
 }

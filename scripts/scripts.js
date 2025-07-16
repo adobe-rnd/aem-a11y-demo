@@ -148,8 +148,8 @@ async function loadLazy(doc) {
   const element = hash ? doc.getElementById(hash.substring(1)) : false;
   if (hash && element) element.scrollIntoView();
 
-  loadHeader(doc.querySelector('header'));
-  loadFooter(doc.querySelector('footer'));
+  loadHeader(doc.querySelector('body > header'));
+  loadFooter(doc.querySelector('body > footer'));
 
   // Load accessibility-specific styles
   loadCSS(`${window.hlx.codeBasePath}/styles/a11y-core.css`);
@@ -162,9 +162,12 @@ async function loadLazy(doc) {
  * without impacting the user experience.
  */
 function loadDelayed() {
-  // eslint-disable-next-line import/no-cycle
-  window.setTimeout(() => import('./delayed.js'), 3000);
-  // load anything that can be postponed to the latest here
+  // Use requestIdleCallback to run low-priority tasks when the browser is free
+  window.requestIdleCallback(() => {
+    // eslint-disable-next-line import/no-cycle
+    import('./delayed.js');
+    // load anything that can be postponed to the latest here
+  }, { timeout: 2000 }); // Ensure it runs after 2 seconds even if page is busy
 }
 
 async function loadPage() {

@@ -1,78 +1,53 @@
-# Accordion
+# Accordion Block
 
-The accordion block allows users to show and hide sections of related content, making it easy to present large amounts of information in a compact space.
+The Accordion block creates a vertically stacked set of interactive headings that each reveal a section of content. It is a common way to organize and condense content-heavy pages.
 
-![Accordion Demo](./README-assets/accordion-demo.gif)
+## Authoring
 
-## Features
+Accordions can be authored in two layouts:
 
-*   **Semantic & Accessible**: Built with native `<details>` and `<summary>` elements for maximum accessibility and robustness.
-*   **Two Layouts**: Can be displayed in a standard stacked layout or a two-column layout.
-*   **Two Selection Modes**: Supports both "single-select" (only one panel can be open at a time) and "multi-select" modes.
-*   **Full Keyboard Navigation**: Follows the ARIA pattern for accordions, including support for `ArrowDown`, `ArrowUp`, `Home`, and `End` keys.
-*   **Deep Linking**: Users can link directly to a specific accordion item, which will be automatically expanded on page load.
-*   **Default Open State**: Authors can specify one or more items to be open by default.
+1.  **Stacked Layout:** A series of heading/content pairs.
+2.  **Columns Layout:** A two-column table where the left column is the heading and the right is the content.
 
-## Authoring Guide
+The default open item can be set by making its heading text **Bold** or *Italic*.
 
-To use the accordion block, create a new block in AEM's document-based authoring and choose "Accordion".
+## Programmatic Creation
 
-### Stacked Layout (Default)
+The Accordion block can be created programmatically for both stacked and column layouts using the `buildBlock` helper.
 
-For a standard vertical accordion, create a two-column table. The first column contains the heading for an item, and the second column contains the panel content.
+### Stacked Layout Example
 
-| Accordion | |
-|---|---|
-| First Question  | Panel 1 Content |
-| Second Question | Panel 2 Content |
-| Third Question  | Panel 3 Content |
+```javascript
+import { buildBlock } from '../../scripts/aem.js';
+import decorate from './accordion.js';
 
-### Two-Column Layout
+// Each heading and content pair is a separate row in the array.
+const stackedContent = [
+  ['Heading 1'],
+  ['<p>Content for the first item.</p>'],
+  ['<strong>Heading 2 (Default Open)</strong>'],
+  ['<p>Content for the second item.</p>'],
+];
 
-For a side-by-side layout, add the "(Columns)" style to the block and structure your content in a two-column table.
+const block = buildBlock('accordion', stackedContent);
+document.querySelector('main').append(block);
+decorate(block);
+```
 
-| Accordion (Columns) | |
-|---|---|
-| First Question  | Panel 1 Content |
-| Second Question | Panel 2 Content |
-| Third Question  | Panel 3 Content |
+### Columns Layout Example
 
-### Multi-Select Mode
+```javascript
+import { buildBlock } from '../../scripts/aem.js';
+import decorate from './accordion.js';
 
-To allow multiple panels to be open simultaneously, add the "(Multi-Select)" style to the block.
+// Each row in the array represents an accordion item,
+// with the heading in the first column and content in the second.
+const columnsContent = [
+  ['Heading 1', '<p>Content for the first item.</p>'],
+  ['Heading 2', '<p>Content for the second item.</p>'],
+];
 
-| Accordion (Multi-Select) | |
-|---|---|
-| ... | ... |
-
-### Default Open State
-
-To make an accordion item open by default on page load, simply wrap its heading in `<strong>` or `<em>` tags.
-
-| Accordion | |
-|---|---|
-| `<strong>First Question</strong>` | This panel will be open by default. |
-| `<em>Second Question</em>`  | This panel will also be open by default. |
-| Third Question | This panel will be closed. |
-
-## Accessibility Implementation
-
-The accordion block is designed to be fully compliant with WCAG 2.2 AA standards.
-
-*   **Semantic HTML**: Uses `<details>` and `<summary>` elements, which have built-in accessibility for state management (open/closed) and keyboard interaction.
-*   **Keyboard Navigation**:
-    *   `Tab`: Moves focus to the next accordion header.
-    *   `Enter` or `Space`: Toggles the open/closed state of the currently focused panel.
-    *   `ArrowDown` / `ArrowUp`: Moves focus between accordion headers.
-    *   `Home`: Moves focus to the first accordion header.
-    *   `End`: Moves focus to the last accordion header.
-*   **ARIA Attributes**: No explicit ARIA roles (e.g., `role="button"`) are needed because the native semantics of `<summary>` are sufficient and more robust.
-
-## Theming
-
-The accordion block can be styled by targeting its CSS classes and using the available CSS Custom Properties.
-
-| CSS Custom Property | Description | Default Value |
-|---|---|---|
-| `--accordion-border-color` | The color of the border between accordion items. | `#ccc` |
-| `--accordion-focus-outline-color` | The color of the focus outline on the summary. | `blue` |
+const block = buildBlock('accordion', columnsContent);
+document.querySelector('main').append(block);
+decorate(block);
+```

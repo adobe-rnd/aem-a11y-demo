@@ -7,6 +7,7 @@ import {
   waitUntil,
 } from '@open-wc/testing';
 import { emulateMedia, sendKeys } from '@web/test-runner-commands';
+import { buildBlock } from '../../../scripts/aem.js';
 import decorate from '../../../blocks/tabs/tabs.js';
 import { loadComponentCSS } from '../../test-helpers.js';
 
@@ -405,6 +406,52 @@ describe('Tabs Block', () => {
       });
 
       await emulateMedia({ colorScheme: 'light' });
+    });
+  });
+
+  describe('Programmatic Creation', () => {
+    it('should create a tabs block from a JS object and separate panel divs', async () => {
+      const container = await fixture(html`<div></div>`);
+
+      // 1. Create the panels
+      const panel1 = document.createElement('div');
+      panel1.id = 'prog-panel1';
+      panel1.innerHTML = '<h3>Panel 1</h3><p>Content</p>';
+
+      const panel2 = document.createElement('div');
+      panel2.id = 'prog-panel2';
+      panel2.innerHTML = '<h3>Panel 2</h3><p>Content</p>';
+
+      // 2. Create the tablist pointing to the panels
+      const tablistContent = `
+        <ul>
+          <li><a href="#prog-panel1">Tab 1</a></li>
+          <li><a href="#prog-panel2"><strong>Tab 2</strong></a></li>
+        </ul>
+      `;
+      const block = buildBlock('tabs', [[tablistContent]]);
+
+      // 3. Append block and panels to the container
+      container.append(block);
+      container.append(panel1);
+      container.append(panel2);
+
+      // 4. Decorate
+      await decorate(block);
+
+      // 5. Assert
+      const tabs = block.querySelectorAll('[role="tab"]');
+      expect(tabs.length).to.equal(2);
+
+      // Check default open state from <strong> tag
+      const [firstTab, secondTab] = tabs;
+      expect(firstTab.getAttribute('aria-selected')).to.equal('false');
+      expect(secondTab.getAttribute('aria-selected')).to.equal('true');
+
+      const firstPanel = container.querySelector('#prog-panel1-container');
+      const secondPanel = container.querySelector('#prog-panel2-container');
+      expect(firstPanel.hidden).to.be.true;
+      expect(secondPanel.hidden).to.be.false;
     });
   });
 });

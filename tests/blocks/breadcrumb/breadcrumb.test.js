@@ -6,6 +6,7 @@ import {
 } from '@open-wc/testing';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { emulateMedia } from '@web/test-runner-commands';
+import { buildBlock } from '../../../scripts/aem.js';
 import decorate from '../../../blocks/breadcrumb/breadcrumb.js';
 import { loadComponentCSS } from '../../test-helpers.js';
 
@@ -115,6 +116,28 @@ describe('Breadcrumb Block', () => {
     const originalHTML = element.innerHTML;
     decorate(element);
     expect(element.innerHTML).to.equal(originalHTML);
+  });
+
+  describe('Programmatic Creation', () => {
+    it('should create a breadcrumb from a JS object using buildBlock', async () => {
+      const el = await fixture(html`<div></div>`);
+      const list = `
+        <ul>
+          <li><a href="/link1">Home</a></li>
+          <li><a href="/link2">Category</a></li>
+          <li>Current Page</li>
+        </ul>
+      `;
+      const block = buildBlock('breadcrumb', [[list]]);
+      el.append(block);
+      decorate(block);
+
+      const nav = el.querySelector('nav');
+      expect(nav).to.exist;
+      const items = el.querySelectorAll('li');
+      expect(items.length).to.equal(3);
+      expect(items[2].getAttribute('aria-current')).to.equal('page');
+    });
   });
 
   describe('Dark Mode', () => {

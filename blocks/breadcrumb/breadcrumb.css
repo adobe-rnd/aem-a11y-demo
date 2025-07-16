@@ -93,15 +93,8 @@
   }
 }
   
-  /* Adapt styles for Windows High Contrast Mode */
+/* Adapt styles for Windows High Contrast Mode */
 @media (forced-colors: active) {
-  .breadcrumb a {
-    color: LinkText;
-  }
-  
-  .breadcrumb li[aria-current="page"],
-  .breadcrumb li:not(:last-child)::after {
-    color: CanvasText;
-  }
+  /* Nothing to do here: default links styles are fine */
 }
   

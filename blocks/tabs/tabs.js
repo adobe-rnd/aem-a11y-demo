@@ -1,4 +1,9 @@
-import { getRandomId, getFocusableElements, getItemForKeyEvent } from '../../scripts/a11y-core.js';
+import {
+  getRandomId,
+  getFocusableElements,
+  getItemForKeyEvent,
+  yieldToMain,
+} from '../../scripts/a11y-core.js';
 
 const originalPanelLinks = {};
 
@@ -68,11 +73,17 @@ async function switchTab(newTab, setFocus = true) {
  * Decorates the tabs block with accessibility and functionality.
  * @param {Element} block - The tabs block element.
  */
+/* eslint-disable no-await-in-loop, no-restricted-syntax */
 export default async function decorate(block) {
   const tablistContainer = block.querySelector('div');
   const tablist = document.createElement('div');
   tablist.setAttribute('role', 'tablist');
   tablist.classList.add('tabs-list');
+  const YIELD_BUDGET_MS = 50;
+  let deadline = performance.now() + YIELD_BUDGET_MS;
+
+  // Set a temporary min-height to prevent CLS during decoration
+  block.style.minHeight = `${block.offsetHeight}px`;
 
   let tabLinks = [...tablistContainer.querySelectorAll('a')];
   if (!tabLinks.length) {
@@ -88,13 +99,13 @@ export default async function decorate(block) {
 
   let defaultTab = null;
 
-  tabLinks.forEach((link, i) => {
+  for (const link of tabLinks) {
     const tabId = getRandomId('tab');
     const panelId = link.href ? `${new URL(link.href).hash.substring(1)}` : getRandomId('tabpanel');
     const panel = block.querySelector(`#${panelId}`)?.closest('div')
       || block.closest('.section')?.querySelector(`#${panelId}`)?.closest('div')
       || block.parentElement.closest('div')?.querySelector(`#${panelId}`)?.closest('div')
-      || block.children.item(i + 1);
+      || block.children.item(tabLinks.indexOf(link) + 1);
 
     if (panel) {
       const tab = document.createElement('button');
@@ -161,9 +172,16 @@ export default async function decorate(block) {
         panel.innerHTML = window.placeholders?.loading || 'Loading...';
       }
     }
-  });
+    if (performance.now() > deadline) {
+      await yieldToMain();
+      deadline = performance.now() + YIELD_BUDGET_MS;
+    }
+  }
 
   tablistContainer.replaceWith(tablist);
+
+  // Decoration is complete, remove the min-height
+  block.style.minHeight = '';
 
   tablist.addEventListener('click', (e) => {
     if (e.target.matches('[role="tab"]')) {
@@ -213,3 +231,4 @@ export default async function decorate(block) {
     await switchTab(tabToActivate, false);
   }
 }
+/* eslint-enable no-await-in-loop, no-restricted-syntax */

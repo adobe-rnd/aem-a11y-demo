@@ -7,6 +7,7 @@ import {
 } from '@open-wc/testing';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { emulateMedia } from '@web/test-runner-commands';
+import { buildBlock } from '../../../scripts/aem.js';
 import decorate from '../../../blocks/accordion/accordion.js';
 import { loadComponentCSS } from '../../test-helpers.js';
 
@@ -214,6 +215,42 @@ describe('Accordion Block', () => {
       });
 
       await emulateMedia({ colorScheme: 'light' }); // Reset
+    });
+  });
+
+  describe('Programmatic Creation', () => {
+    it('should create a stacked accordion from a JS object using buildBlock', async () => {
+      const el = await fixture(html`<div></div>`);
+      const content = [
+        ['Heading 1'],
+        ['Content 1'],
+        ['<strong>Heading 2</strong>'], // default open
+        ['Content 2'],
+      ];
+      const block = buildBlock('accordion', content);
+      el.append(block);
+      await decorate(block);
+
+      const details = el.querySelectorAll('details');
+      expect(details.length).to.equal(2);
+      expect(details[0].open).to.be.false;
+      expect(details[1].open).to.be.true;
+    });
+
+    it('should create a columns accordion from a JS object using buildBlock', async () => {
+      const el = await fixture(html`<div></div>`);
+      const content = [
+        ['Heading 1', 'Content 1'],
+        ['Heading 2', 'Content 2'],
+      ];
+      const block = buildBlock('accordion', content);
+      el.append(block);
+      await decorate(block);
+
+      const details = el.querySelectorAll('details');
+      expect(details.length).to.equal(2);
+      const summary = el.querySelector('summary');
+      expect(summary.textContent).to.equal('Heading 1');
     });
   });
 });

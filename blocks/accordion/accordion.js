@@ -1,4 +1,4 @@
-import { getItemForKeyEvent } from '../../scripts/a11y-core.js';
+import { getItemForKeyEvent, yieldToMain } from '../../scripts/a11y-core.js';
 
 /**
  * Creates a <details> element for an accordion item.
@@ -33,24 +33,37 @@ function createAccordionItem(headingDiv, panelDiv) {
   return details;
 }
 
-export default function decorate(block) {
+/* eslint-disable no-await-in-loop, no-restricted-syntax */
+export default async function decorate(block) {
   const isMultiSelect = block.classList.contains('multi-select');
   // Auto-detect layout by checking the number of columns in the first row
   const isTwoColumnLayout = block.querySelector(':scope > div')?.children.length === 2;
+  const YIELD_BUDGET_MS = 50;
+
+  // Pre-calculate height to prevent CLS
+  const itemHeight = block.querySelector(':scope > div')?.offsetHeight || 48; // Estimate 48px if not available
+  const itemCount = block.querySelectorAll(':scope > div').length / (isTwoColumnLayout ? 1 : 2);
+  block.style.minHeight = `${itemCount * itemHeight}px`;
 
   if (isTwoColumnLayout) {
     const rows = [...block.querySelectorAll(':scope > div')];
-    rows.forEach((row) => {
+    let deadline = performance.now() + YIELD_BUDGET_MS;
+    for (const row of rows) {
       const headingDiv = row.children[0];
       const panelDiv = row.children[1];
       const details = createAccordionItem(headingDiv, panelDiv);
       if (details) {
         row.replaceWith(details);
       }
-    });
+      if (performance.now() > deadline) {
+        await yieldToMain();
+        deadline = performance.now() + YIELD_BUDGET_MS;
+      }
+    }
   } else {
     // Default stacked layout
     const items = [...block.querySelectorAll(':scope > div')];
+    let deadline = performance.now() + YIELD_BUDGET_MS;
     for (let i = 0; i < items.length; i += 2) {
       const headingRow = items[i];
       const panelRow = items[i + 1];
@@ -63,8 +76,15 @@ export default function decorate(block) {
         headingRow.replaceWith(details);
         panelRow.remove();
       }
+      if (performance.now() > deadline) {
+        await yieldToMain();
+        deadline = performance.now() + YIELD_BUDGET_MS;
+      }
     }
   }
+
+  // Clear the min-height after decoration is complete
+  block.style.minHeight = '';
 
   const summaries = block.querySelectorAll('summary');
 
@@ -136,3 +156,4 @@ export default function decorate(block) {
     }
   }
 }
+/* eslint-enable no-await-in-loop, no-restricted-syntax */

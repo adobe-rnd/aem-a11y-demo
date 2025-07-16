@@ -1,41 +1,35 @@
-# Breadcrumb
+# Breadcrumb Block
 
-The breadcrumb block provides a navigational aid that shows the user's location within the site's hierarchy, helping them understand and navigate the site structure.
+The Breadcrumb block displays the hierarchical path to the current page, providing users with a clear navigational trail. It is an essential component for site usability and SEO.
 
-## Features
+## Authoring
 
-*   **Accessible by Design**: Automatically wraps the component in a `<nav>` element with an `aria-label="breadcrumb"` and uses an ordered list (`<ol>`) to convey the hierarchical structure.
-*   **Current Page Identification**: The last item in the breadcrumb is automatically identified as the current page with `aria-current="page"`.
-*   **Flexible Authoring**: Can be authored as either an unordered (`<ul>`) or ordered (`<ol>`) list in the source document.
+A breadcrumb is authored as a simple unordered (`<ul>`) or ordered (`<ol>`) list of links. The last item in the list represents the current page and should typically not be a link.
 
-## Authoring Guide
+## Programmatic Creation
 
-To use the breadcrumb block, create a new block in AEM's document-based authoring and choose "Breadcrumb".
+The Breadcrumb block can be created programmatically using the `buildBlock` helper. The content should be a string containing a `<ul>` or `<ol>` element.
 
-The breadcrumb is authored as a simple list (either ordered or unordered). Each list item represents a level in the site's hierarchy.
+### Example
 
-| Breadcrumb |
-|---|
-| <ul><li><a href="/us/en/products">Products</a></li><li><a href="/us/en/products/creative-cloud">Creative Cloud</a></li><li>Photoshop</li></ul> |
+```javascript
+import { buildBlock } from '../../scripts/aem.js';
+import decorate from './breadcrumb.js';
 
-*   The last item should typically not be a link, as it represents the current page.
-*   If the last item is a link that points to the current page, `aria-current="page"` will still be correctly applied.
+// The content is a string containing the list HTML.
+const breadcrumbList = `
+  <ul>
+    <li><a href="/link1">Home</a></li>
+    <li><a href="/link2">Category</a></li>
+    <li>Current Page</li>
+  </ul>
+`;
 
-## Accessibility Implementation
+// Create the block DOM structure.
+// The content is wrapped in a 2D array.
+const block = buildBlock('breadcrumb', [[breadcrumbList]]);
 
-The breadcrumb block is designed to be fully compliant with WCAG 2.2 AA standards.
-
-*   **Landmark Navigation**: The component is wrapped in a `<nav>` landmark with an `aria-label` of "breadcrumb", making it easy for screen reader users to find and understand its purpose.
-*   **Ordered Structure**: The list is converted to an `<ol>` to programmatically convey that the items are in a specific, hierarchical order.
-*   **Current Page State**: The last item is marked with `aria-current="page"` to clearly indicate the user's current location to assistive technologies.
-*   **Separator Handling**: The visual separators (e.g., '>') added via CSS are hidden from screen readers with `aria-hidden="true"` to prevent them from being announced, reducing auditory clutter.
-
-## Theming
-
-The breadcrumb block can be styled by targeting its CSS classes and using the available CSS Custom Properties.
-
-| CSS Custom Property | Description | Default Value |
-|---|---|---|
-| `--breadcrumb-separator-color` | The color of the separator icon. | `#505050` |
-| `--breadcrumb-link-color` | The color for breadcrumb links. | `#1473E6` |
-| `--breadcrumb-current-color` | The color for the current page text. | `#505050` | 
+// Append the block to the page and decorate it.
+document.querySelector('main').append(block);
+decorate(block);
+``` 

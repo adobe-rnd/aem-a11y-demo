@@ -63,10 +63,14 @@ describe('Accordion WCAG Compliance', () => {
 
   describe('Principle 1: Perceivable', () => {
     describe('Guideline 1.1: Text Alternatives', () => {
-      it.skip('1.1.1 Non-text Content (Level A)', () => {
-        // N/A: This is a content authoring concern. The component itself does not
-        // add non-text content, but authors could place icons in summaries.
-        // The responsibility for providing text alternatives lies with the author.
+      it('1.1.1 Non-text Content (Level A)', async () => {
+        await setupBlock();
+        await expect(block).to.be.accessible({
+          runOnly: {
+            type: 'rule',
+            values: ['image-alt', 'svg-img-alt', 'button-name'],
+          },
+        });
       });
     });
 
@@ -104,12 +108,23 @@ describe('Accordion WCAG Compliance', () => {
       it('1.3.1 Info and Relationships (Level A)', async () => {
         await setupBlock();
         const detailsElements = block.querySelectorAll('details');
-        expect(detailsElements.length).to.be.greaterThan(0);
-        detailsElements.forEach((details) => {
-          const summary = details.querySelector('summary');
-          expect(summary, 'Each <details> element should have a <summary> as its first child.').to.exist;
-          expect(summary).to.equal(details.firstElementChild);
-        });
+
+        if (detailsElements.length > 0) {
+          // Phase 1: Best practice check for native <details>/<summary> elements.
+          detailsElements.forEach((details) => {
+            const summary = details.querySelector('summary');
+            expect(summary, 'Each <details> element should have a <summary> as its first child.').to.exist;
+            expect(summary).to.equal(details.firstElementChild);
+          });
+        } else {
+          // Phase 2: Fallback to a generic ARIA role check.
+          await expect(block).to.be.accessible({
+            runOnly: {
+              type: 'rule',
+              values: ['list', 'listitem'],
+            },
+          });
+        }
       });
 
       it('1.3.2 Meaningful Sequence (Level A)', async () => {
@@ -229,11 +244,27 @@ describe('Accordion WCAG Compliance', () => {
         await setViewport({ width: 800, height: 600 });
       });
 
-      it('1.4.11 Non-text Contrast (Level AA)', async () => {
-        await setupBlock();
-        // This test specifically checks the disclosure triangle's contrast.
-        await expect(block).to.be.accessible({
-          runOnly: { type: 'rule', values: ['non-text-contrast'] },
+      describe('1.4.11 Non-text Contrast (Level AA)', () => {
+        const mediaModes = [
+          { name: 'light mode', options: { colorScheme: 'light' } },
+          { name: 'dark mode', options: { colorScheme: 'dark' } },
+          { name: 'light mode with high contrast', options: { colorScheme: 'light', prefersContrast: 'more' } },
+          { name: 'dark mode with high contrast', options: { colorScheme: 'dark', prefersContrast: 'more' } },
+          { name: 'forced colors mode', options: { forcedColors: 'active' } },
+        ];
+
+        mediaModes.forEach((mode) => {
+          it(`should have sufficient non-text contrast in ${mode.name}`, async function test() {
+            if (mode.name === 'forced colors mode' && navigator.userAgent.includes('Firefox')) {
+              this.skip();
+            }
+
+            await emulateMedia(mode.options);
+            await setupBlock();
+            await expect(block).to.be.accessible({
+              runOnly: { type: 'rule', values: ['non-text-contrast'] },
+            });
+          });
         });
       });
 

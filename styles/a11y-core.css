@@ -39,6 +39,13 @@ main:focus {
   outline-offset: var(--skip-link-border-width);
 }
 
+/* Ensure buttons have a visible focus outline when focused via keyboard */
+button:focus-visible,
+.button:focus-visible {
+  outline: var(--skip-link-border-width) solid var(--skip-link-focus-outline-color);
+  outline-offset: var(--skip-link-border-width);
+}
+
 /* Dark Mode styles */
 @media (prefers-color-scheme: dark) {
   .skip-links {
@@ -72,6 +79,11 @@ main:focus {
 
   main:focus-visible,
   main:focus {
+    outline-color: Highlight;
+  }
+
+  button:focus-visible,
+  .button:focus-visible {
     outline-color: Highlight;
   }
 } 

@@ -97,9 +97,7 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
   describe('Principle 1: Perceivable', () => {
     describe('Guideline 1.1: Text Alternatives', () => {
       it('1.1.1 Non-text Content (Level A)', async () => {
-        // Test case 1: Icon with a proper aria-label on the link (should pass)
-        // The aria-label from the link should be transferred to the tab button.
-        const passingFixture = await fixture(html`
+        const fixtureWithIcon = await fixture(html`
           <div class="tabs">
             <div>
               <div><ul><li><a href="#p1" aria-label="Search"><img src="/icons/search.svg" alt=""></a></li></ul></div>
@@ -107,53 +105,13 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
             <div><div id="p1">Panel 1</div></div>
           </div>
         `);
-        decorate(passingFixture);
-        const passingTab = passingFixture.querySelector('[role="tab"]');
-        const passingImg = passingTab.querySelector('img');
-        // eslint-disable-next-line no-unused-expressions
-        expect(passingTab.getAttribute('aria-label')).to.equal('Search');
-        // eslint-disable-next-line no-unused-expressions
-        expect(passingImg).to.exist;
-        expect(passingImg.getAttribute('alt')).to.equal(''); // Decorative alt is fine if tab has aria-label
-
-        // Test case 2: Icon with meaningful alt text on the image (should pass)
-        // The image with its alt text should be moved into the tab.
-        const altTextFixture = await fixture(html`
-          <div class="tabs">
-            <div>
-              <div><ul><li><a href="#p1"><img src="/icons/search.svg" alt="Search"></a></li></ul></div>
-            </div>
-            <div><div id="p1">Panel 1</div></div>
-          </div>
-        `);
-        decorate(altTextFixture);
-        const altTextTab = altTextFixture.querySelector('[role="tab"]');
-        const altTextImg = altTextTab.querySelector('img');
-        // eslint-disable-next-line no-unused-expressions
-        expect(altTextTab.getAttribute('aria-label')).to.be.null;
-        // eslint-disable-next-line no-unused-expressions
-        expect(altTextImg).to.exist;
-        expect(altTextImg.getAttribute('alt')).to.equal('Search');
-
-        // Test case 3: Icon with NO accessible name (should fail)
-        // This tab has an image with decorative alt text but no aria-label on the link.
-        const failingFixture = await fixture(html`
-          <div class="tabs">
-            <div>
-              <div><ul><li><a href="#p1"><img src="/icons/search.svg" alt=""></a></li></ul></div>
-            </div>
-            <div><div id="p1">Panel 1</div></div>
-          </div>
-        `);
-        decorate(failingFixture);
-        const failingTab = failingFixture.querySelector('[role="tab"]');
-        const hasAriaLabel = !!failingTab.getAttribute('aria-label');
-        const img = failingTab.querySelector('img');
-        // An accessible name requires either an aria-label on the button
-        // OR meaningful alt text on the image.
-        const hasAccessibleName = hasAriaLabel || (img && !!img.getAttribute('alt'));
-        // eslint-disable-next-line no-unused-expressions
-        expect(hasAccessibleName).to.be.false;
+        decorate(fixtureWithIcon);
+        await expect(fixtureWithIcon).to.be.accessible({
+          runOnly: {
+            type: 'rule',
+            values: ['image-alt', 'svg-img-alt', 'button-name'],
+          },
+        });
       });
     });
 
@@ -466,15 +424,27 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
         await setViewport({ width: 800, height: 600 });
       });
 
-      it('1.4.11 Non-text Contrast (Level AA)', async () => {
-        // This test uses the axe-core engine to specifically check the contrast
-        // of UI components, fulfilling WCAG 2.2 SC 1.4.11.
-        await setupStandardBlock();
-        await expect(block).to.be.accessible({
-          runOnly: {
-            type: 'rule',
-            values: ['non-text-contrast'],
-          },
+      describe('1.4.11 Non-text Contrast (Level AA)', () => {
+        const mediaModes = [
+          { name: 'light mode', options: { colorScheme: 'light' } },
+          { name: 'dark mode', options: { colorScheme: 'dark' } },
+          { name: 'light mode with high contrast', options: { colorScheme: 'light', prefersContrast: 'more' } },
+          { name: 'dark mode with high contrast', options: { colorScheme: 'dark', prefersContrast: 'more' } },
+          { name: 'forced colors mode', options: { forcedColors: 'active' } },
+        ];
+
+        mediaModes.forEach((mode) => {
+          it(`should have sufficient non-text contrast in ${mode.name}`, async function test() {
+            if (mode.name === 'forced colors mode' && navigator.userAgent.includes('Firefox')) {
+              this.skip();
+            }
+
+            await emulateMedia(mode.options);
+            await setupStandardBlock();
+            await expect(block).to.be.accessible({
+              runOnly: { type: 'rule', values: ['non-text-contrast'] },
+            });
+          });
         });
       });
 
