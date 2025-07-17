@@ -85,7 +85,7 @@
   min-height: 44px;
 }
 
-.dialog dialog,
+.dialog dialog:focus-visible,
 .dialog .button:focus-visible {
   outline: var(--dialog-border-width) solid var(--dialog-focus-outline-color);
   outline-offset: var(--dialog-border-width);
