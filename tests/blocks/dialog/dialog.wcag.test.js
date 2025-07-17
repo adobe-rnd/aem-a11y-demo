@@ -806,8 +806,8 @@ describe('WCAG Compliance: Dialog', () => {
         // or user motion (e.g., waving at a camera).
       });
 
-      it.skip('2.5.5 Target Size (Minimum) (Level AA)', async () => {
-        const TARGET_SIZE_MIN = 24;
+      it('2.5.5 Target Size (Enhanced) (Level AAA)', async () => {
+        const TARGET_SIZE_MIN = 44;
         const targetEl = await fixture(plainFixture);
         await decorate(targetEl.querySelector('.dialog'));
         const dialog = targetEl.querySelector('dialog');
@@ -831,20 +831,9 @@ describe('WCAG Compliance: Dialog', () => {
         // N/A: The component does not use any dragging movements for its operation.
       });
 
-      it('2.5.8 Target Size (Minimum) (Level AA)', async () => {
-        const TARGET_SIZE_MIN = 44;
-        const targetEl = await fixture(plainFixture);
-        await decorate(targetEl.querySelector('.dialog'));
-        const dialog = targetEl.querySelector('dialog');
-        dialog.style.display = 'flex'; // Make visible for measurement
-        await nextFrame();
-
-        const interactiveElements = dialog.querySelectorAll('button, a[href], [role="button"]');
-        interactiveElements.forEach((el) => {
-          const rect = el.getBoundingClientRect();
-          expect(rect.width).to.be.at.least(TARGET_SIZE_MIN, `Width of <${el.tagName}> should be at least ${TARGET_SIZE_MIN}px`);
-          expect(rect.height).to.be.at.least(TARGET_SIZE_MIN, `Height of <${el.tagName}> should be at least ${TARGET_SIZE_MIN}px`);
-        });
+      it.skip('2.5.8 Target Size (Minimum) (Level AA)', () => {
+        // Covered: We are conforming to the stricter AAA requirement in 2.5.5 (44x44px),
+        // which exceeds the 24x24px requirement of this AA success criterion.
       });
     });
   });
@@ -875,10 +864,14 @@ describe('WCAG Compliance: Dialog', () => {
 
     describe('Guideline 3.2: Predictable', () => {
       it.skip('3.2.1 On Focus (Level A)', () => {
-        // N/A: The component does not have any interactive elements that
-        // change focus on interaction.
+        // N/A: Receiving focus does not trigger a change of context. The dialog
+        // remains on the same page when its internal elements are focused.
       });
       it('3.2.2 On Input', async () => {
+        // Covered: Interacting with controls (e.g., clicking a button) changes the
+        // state of the component (e.g., closes it) but does not cause an unexpected
+        // change of context like navigating to a new page. This is the expected
+        // behavior for a dialog.
         const el = await fixture(html`<div><button>Open</button>${plainFixture}</div>`);
         const trigger = el.querySelector('button');
         const block = el.querySelector('.dialog');
@@ -895,8 +888,9 @@ describe('WCAG Compliance: Dialog', () => {
         // the ARIA design pattern, which is validated in tests for Guideline 2.1 and 4.1.
       });
       it.skip('3.2.4 Consistent Identification (Level AA)', () => {
-        // N/A: The component uses standard ARIA roles (tab, tablist, tabpanel),
-        // ensuring consistent identification. This is validated in the 4.1.2 test.
+        // Covered: The component consistently uses the <dialog> element and appropriate
+        // ARIA roles, ensuring it is identified consistently across the site. This is
+        // validated by tests for 1.3.1 (Info and Relationships) and 4.1.2 (Name, Role, Value).
       });
 
       it('3.2.5 Change on Request (Level AAA)', async () => {
@@ -920,6 +914,11 @@ describe('WCAG Compliance: Dialog', () => {
       });
     });
 
+    /**
+     * @description Guideline 3.3 focuses on input assistance for forms. Since this
+     * component does not render form inputs, these criteria are not applicable.
+     * Forms used within a dialog must be tested separately.
+     */
     describe('Guideline 3.3: Input Assistance', () => {
       it.skip('3.3.1 Error Identification (Level A)', () => {
         // N/A: The component does not have any input fields that collect
@@ -960,17 +959,43 @@ describe('WCAG Compliance: Dialog', () => {
   describe('Principle 4: Robust', () => {
     describe('Guideline 4.1: Compatible', () => {
       it.skip('4.1.1 Parsing (Level A)', () => {
-        // N/A: Obsolete in WCAG 2.2 and handled by linters.
+        // Covered: This is largely obsolete in WCAG 2.2. However, core requirements like
+        // unique IDs and no duplicate attributes are implicitly validated by the tests for
+        // 4.1.2, which run a comprehensive accessibility audit.
       });
 
-      it.skip('4.1.2 Name, Role, Value: Passes a basic accessibility audit', async () => {
-        const el = await fixture(plainFixture);
-        await decorate(el.querySelector('.dialog'));
-        await expect(el).to.be.accessible();
+      dialogVariants.forEach((variant) => {
+        it(`4.1.2 Name, Role, Value: ${variant} dialog is programmatically determinable`, async () => {
+          const el = await fixture(html`
+            <div>
+              <div class="dialog ${variant}">
+                <div><div>dialog</div></div>
+                <div><div><h2>${variant}</h2></div></div>
+                <div><div><p>Content</p></div></div>
+                 <div>
+                  <div>
+                    <p><em>Secondary</em></p>
+                    <p><strong>Primary</strong></p>
+                  </div>
+                </div>
+              </div>
+            </div>`);
+          await decorate(el.querySelector('.dialog'));
+          const dialog = el.querySelector('dialog');
+          dialog.style.display = 'flex';
+          await nextFrame();
+
+          // This comprehensive check validates that all elements have the correct
+          // roles, states, and properties, fulfilling SC 4.1.2.
+          await expect(dialog).to.be.accessible();
+        });
       });
 
       it.skip('4.1.3 Status Messages (Level AA)', () => {
-        // N/A: The component does not present status messages.
+        // N/A: This SC applies to status messages that appear without a change in context.
+        // A modal dialog, by design, moves focus and creates a change of context,
+        // so its appearance is announced by the screen reader as a new context,
+        // not as a simple status message.
       });
     });
   });
