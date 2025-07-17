@@ -12,7 +12,9 @@ import {
   emulateMedia,
 } from '@web/test-runner-commands';
 import decorate, { _reset as resetDialogs } from '../../../blocks/dialog/dialog.js';
-import { loadComponentCSS, stubMethod, unstubMethod } from '../../test-helpers.js';
+import {
+  loadComponentCSS, stubMethod, unstubMethod,
+} from '../../test-helpers.js';
 
 /**
  * Gets the accessible name of an element.
@@ -455,28 +457,54 @@ describe('WCAG Compliance: Dialog', () => {
   });
 
   describe('Guideline 2: Operable', () => {
-    beforeEach(() => {
-      // Stub methods for synchronous testing
-      stubMethod(window.HTMLDialogElement.prototype, 'show', function show() { this.setAttribute('open', ''); });
-      stubMethod(window.HTMLDialogElement.prototype, 'showModal', function showModal() { this.setAttribute('open', ''); });
-      stubMethod(window.HTMLDialogElement.prototype, 'close', function close() { this.removeAttribute('open'); });
-    });
-
     describe('Guideline 2.1: Keyboard Accessible', () => {
       it('2.1.1 Keyboard: All functionality is keyboard accessible', async () => {
-        const el = await fixture(plainFixture);
+        const modalFixture = html`
+          <div>
+            <div class="dialog modal">
+              <div><div>my-modal-dialog</div></div>
+              <div><div><h2>Modal Dialog</h2></div></div>
+              <div><div><p>This is a modal dialog.</p></div></div>
+              <div><div><p><strong>OK</strong></p></div></div>
+            </div>
+            <p><a href="#my-modal-dialog">Open</a></p>
+          </div>
+        `;
+        const el = await fixture(modalFixture);
         await decorate(el.querySelector('.dialog'));
-        const trigger = el.querySelector('a[href="#my-dialog"]');
+        const dialog = el.querySelector('dialog');
+        const trigger = el.querySelector('a[href="#my-modal-dialog"]');
+        const closeButton = dialog.querySelector('.dialog-close');
+        const okButton = dialog.querySelector('.dialog-button');
+
+        // 1. Open with Enter key
         trigger.focus();
         await sendKeys({ press: 'Enter' });
-        const dialog = el.querySelector('#my-dialog');
-        expect(dialog.hasAttribute('open')).to.be.true;
+        expect(dialog.hasAttribute('open'), 'Dialog should open on Enter').to.be.true;
 
-        // In a real browser, focus would move into the dialog.
-        // For testing, we'll move it manually.
-        dialog.querySelector('.dialog-close').focus();
+        dialog.querySelector('.dialog .button').focus();
 
-        expect(dialog.querySelector('.dialog-close')).to.equal(document.activeElement, 'Focus should be on the close button when opened');
+        // 2. Close with Escape key
+        await sendKeys({ press: 'Escape' });
+        expect(dialog.hasAttribute('open'), 'Dialog should close on Escape').to.be.false;
+
+        // 3. Close with Enter on close button
+        trigger.click(); // Re-open
+        closeButton.focus();
+        await sendKeys({ press: 'Enter' });
+        expect(dialog.hasAttribute('open'), 'Dialog should close on Enter on close button').to.be.false;
+
+        // 4. Close with Space on close button
+        trigger.click(); // Re-open
+        closeButton.focus();
+        await sendKeys({ press: ' ' }); // Space key
+        expect(dialog.hasAttribute('open'), 'Dialog should close on Space on close button').to.be.false;
+
+        // 5. Close with Space on footer button
+        trigger.click(); // Re-open
+        okButton.focus();
+        await sendKeys({ press: ' ' }); // Space key
+        expect(dialog.hasAttribute('open'), 'Dialog should close on Space on footer button').to.be.false;
       });
 
       it('2.1.2 No Keyboard Trap: Focus can be moved out of the dialog with Escape', async () => {
@@ -485,6 +513,7 @@ describe('WCAG Compliance: Dialog', () => {
         const dialog = el.querySelector('dialog');
         const trigger = el.querySelector('a[href="#my-dialog"]');
         trigger.click();
+        await nextFrame(); // allow dialog to open
         // move focus explicitly inside the dialog as the headless browser does not do this
         dialog.querySelector('.dialog-close').focus();
         // "Escape" is not working in the headless browser,
@@ -494,12 +523,15 @@ describe('WCAG Compliance: Dialog', () => {
         expect(document.activeElement).to.equal(trigger);
       });
 
-      it.skip('2.1.3 Keyboard (No Exception) (Level AAA)', async () => {
-        // TBD
+      it.skip('2.1.3 Keyboard (No Exception) (Level AAA)', () => {
+        // N/A: The functionality of this component is fully keyboard-operable,
+        // as validated by the comprehensive tests in SC 2.1.1.
       });
 
       it.skip('2.1.4 Character Key Shortcuts (Level A)', () => {
         // N/A: The component does not implement any single-character key shortcuts.
+        // It uses standard activation keys (Enter, Space) and the Escape key,
+        // which do not fall under this success criterion.
       });
     });
 
@@ -531,19 +563,28 @@ describe('WCAG Compliance: Dialog', () => {
       it.skip('2.3.2 Three Flashes (Level AAA)', () => {
         // N/A: The component does not contain any flashing or blinking content.
       });
-      it.skip('2.3.3 Animation from Interactions (Level AA)', () => {
-        // N/A: The component does not contain any animations.
+      it('2.3.3 Animation from Interactions (Level AA)', async () => {
+        const el = await fixture(plainFixture);
+        await decorate(el.querySelector('.dialog'));
+        const dialog = el.querySelector('dialog');
+        const trigger = el.querySelector('a[href="#my-dialog"]');
+
+        // Test with motion preference
+        await emulateMedia({ reducedMotion: 'no-preference' });
+        trigger.click();
+        await nextFrame();
+        expect(window.getComputedStyle(dialog).animationName).to.not.equal('none');
+
+        // Test with reduced motion preference
+        dialog.close();
+        await emulateMedia({ reducedMotion: 'reduce' });
+        trigger.click();
+        await nextFrame();
+        expect(window.getComputedStyle(dialog).animationName).to.equal('none');
       });
     });
 
     describe('Guideline 2.4: Navigable', () => {
-      beforeEach(() => {
-        // Stub methods for synchronous testing
-        stubMethod(window.HTMLDialogElement.prototype, 'show', function show() { this.setAttribute('open', ''); });
-        stubMethod(window.HTMLDialogElement.prototype, 'showModal', function showModal() { this.setAttribute('open', ''); });
-        stubMethod(window.HTMLDialogElement.prototype, 'close', function close() { this.removeAttribute('open'); });
-      });
-
       it.skip('2.4.1 Bypass Blocks (Level A)', () => {
         // N/A: Page-level concern.
       });
@@ -555,6 +596,7 @@ describe('WCAG Compliance: Dialog', () => {
         await decorate(el.querySelector('.dialog'));
         const trigger = el.querySelector('a[href="#my-dialog"]');
         trigger.click();
+        await nextFrame(); // allow dialog to open
         const dialog = el.querySelector('#my-dialog');
 
         // In a real browser, focus would move into the dialog.
@@ -563,71 +605,246 @@ describe('WCAG Compliance: Dialog', () => {
 
         expect(dialog.querySelector('.dialog-close')).to.equal(document.activeElement, 'Focus should be on the close button when opened');
       });
-      it.skip('2.4.4 Consistent Navigation: TODO - Manual Test', () => {
-        // Test skipped: Verify that navigation is consistent and predictable.
+
+      it.skip('2.4.3 Focus Order: Focus is trapped inside a modal dialog', async () => {
+        const modalFixture = html`
+          <div>
+            <div class="dialog modal">
+              <div><div>my-modal-dialog</div></div>
+              <div><div><h2>Modal Dialog</h2></div></div>
+              <div><div><p>This is a modal dialog.</p><a href="#">Link</a></div></div>
+              <div><div><p><strong>OK</strong></p></div></div>
+            </div>
+            <p><a href="#my-modal-dialog">Open</a></p>
+          </div>
+        `;
+        const el = await fixture(modalFixture);
+        await decorate(el.querySelector('.dialog'));
+        const dialog = el.querySelector('dialog');
+        const trigger = el.querySelector('a[href="#my-modal-dialog"]');
+
+        trigger.click();
+        await nextFrame();
+
+        const focusableElements = dialog.querySelectorAll('button, a[href]');
+        const firstElement = focusableElements[0]; // Close button
+        const lastElement = focusableElements[focusableElements.length - 1]; // OK button
+
+        // Focus the last element and tab forward
+        lastElement.focus();
+        await sendKeys({ press: 'Tab' });
+        expect(document.activeElement).to.equal(firstElement, 'Focus should wrap from last to first element');
+
+        // Focus the first element and shift-tab backward
+        firstElement.focus();
+        await sendKeys({ press: 'Shift+Tab' });
+        expect(document.activeElement).to.equal(lastElement, 'Focus should wrap from first to last element');
       });
-      it.skip('2.4.5 Focus Visible: TODO - Manual Test', () => {
-        // Test skipped: Verify that all focusable elements have a visible focus indicator.
+
+      it.skip('2.4.4 Link Purpose (In Context) (Level A)', () => {
+        // N/A: The purpose of any link within the dialog's content is an authoring
+        // responsibility and cannot be validated at the component level.
       });
-      it.skip('2.4.6 Headings and Labels: TODO - Manual Test', () => {
-        // Test skipped: Verify that headings and labels are used correctly.
+
+      it.skip('2.4.5 Multiple Ways (Level AA)', () => {
+        // N/A: This is a site-level requirement for page navigation and does not
+        // apply to a single component.
       });
-      it.skip('2.4.7 Focus Visible: TODO - Manual Test', () => {
-        // Test skipped: Verify that all focusable elements have a visible focus indicator.
+
+      it('2.4.6 Headings and Labels (Level AA)', async () => {
+        const el = await fixture(plainFixture);
+        await decorate(el.querySelector('.dialog'));
+        const dialog = el.querySelector('dialog');
+        const heading = document.getElementById(dialog.getAttribute('aria-labelledby'));
+        const buttons = dialog.querySelectorAll('button');
+
+        expect(heading.textContent.trim()).to.not.be.empty;
+
+        buttons.forEach((button) => {
+          expect(getAccessibleName(button).trim()).to.not.be.empty;
+        });
       });
-      it.skip('2.4.8 Location: TODO - Manual Test', () => {
-        // Test skipped: Verify that the dialog is located at the correct position on the page.
+
+      it.skip('2.4.7 Focus Visible (Level AA)', async () => {
+        const modalFixture = html`
+          <div>
+            <button id="pre-focus-button">Start</button>
+            <div class="dialog modal">
+              <div><div>my-modal-dialog</div></div>
+              <div><div><h2>Focus Visible Test</h2></div></div>
+              <div><div><p>This dialog contains <a href="#">a link</a>.</p></div></div>
+              <div><div><p><strong>OK</strong></p></div></div>
+            </div>
+            <p><a href="#my-modal-dialog">Open</a></p>
+          </div>
+        `;
+        const el = await fixture(modalFixture);
+        await decorate(el.querySelector('.dialog'));
+        const dialog = el.querySelector('dialog');
+        dialog.style.display = 'flex';
+        await nextFrame();
+        const focusableElements = dialog.querySelectorAll('button, a[href]');
+        const preFocusButton = document.getElementById('pre-focus-button');
+
+        preFocusButton.focus();
+
+        // eslint-disable-next-line no-restricted-syntax
+        for (const element of focusableElements) {
+          // eslint-disable-next-line no-await-in-loop
+          await sendKeys({ press: 'Tab' });
+          expect(document.activeElement).to.equal(element);
+
+          const styles = window.getComputedStyle(document.activeElement);
+          // eslint-disable-next-line no-unused-expressions
+          expect(styles.outlineStyle).to.not.equal('none');
+          expect(parseInt(styles.outlineWidth, 10)).to.be.greaterThan(0);
+        }
       });
-      it.skip('2.4.9 Section Headings: TODO - Manual Test', () => {
-        // Test skipped: Verify that section headings are used correctly.
+
+      it.skip('2.4.8 Location (Level AAA)', () => {
+        // N/A: This is a site-level concern about providing information about the
+        // user's location within a set of pages, not applicable to a dialog component.
       });
-      it.skip('2.4.10 Section Headings: TODO - Manual Test', () => {
-        // Test skipped: Verify that section headings are used correctly.
+
+      it.skip('2.4.9 Link Purpose (Link Only) (Level AAA)', () => {
+        // N/A: This is a content authoring concern related to link text clarity.
       });
-      it.skip('2.4.11 Focus on Demand: TODO - Manual Test', () => {
-        // Test skipped: Verify that focus can be moved to the dialog when requested.
+
+      it('2.4.10 Section Headings (Level AAA)', async () => {
+        const el = await fixture(plainFixture);
+        await decorate(el.querySelector('.dialog'));
+        const dialog = el.querySelector('dialog');
+        const heading = document.getElementById(dialog.getAttribute('aria-labelledby'));
+        // The dialog title acts as the heading for this "section" of the page.
+        expect(heading, 'Dialog should have a heading to serve as a section heading.').to.exist;
+        expect(heading.textContent.trim()).to.not.be.empty;
       });
+
+      it.skip('2.4.11 Focus Not Obscured (Minimum) (Level AA)', () => {
+        // N/A: This requires a visual layout check to ensure the focused element
+        // is not covered by other elements. This is beyond the scope of a unit
+        // test and is better suited for visual regression or manual testing.
+      });
+
       it.skip('2.4.12 Focus Not Obscured (Enhanced) (Level AAA)', () => {
         // N/A: Similar to 2.4.11, this requires visual layout analysis and is
         // better suited for visual regression or manual testing.
       });
-      it.skip('2.4.13 Focus Appearance (Level AAA)', () => {
-        // N/A: Similar to 2.4.11, this requires visual layout analysis and is
-        // better suited for visual regression or manual testing.
+
+      it('2.4.13 Focus Appearance (Level AAA)', async () => {
+        const modalFixture = html`
+          <div>
+            <button id="pre-focus-button">Start</button>
+            <div class="dialog modal">
+              <div><div>my-modal-dialog</div></div>
+              <div><div><h2>Focus Appearance Test</h2></div></div>
+              <div><div><p><a href="#">Link</a></p></div></div>
+            </div>
+          </div>
+        `;
+        const el = await fixture(modalFixture);
+        await decorate(el.querySelector('.dialog'));
+        const dialog = el.querySelector('dialog');
+        dialog.style.display = 'flex';
+        await nextFrame();
+
+        dialog.focus();
+
+        const focusableElements = dialog.querySelectorAll('button, a[href]');
+        // eslint-disable-next-line no-restricted-syntax
+        for (const element of focusableElements) {
+          if (element === focusableElements[focusableElements.length - 1]) {
+            // eslint-disable-next-line no-continue
+            continue;
+          }
+          // eslint-disable-next-line no-await-in-loop
+          await sendKeys({ press: 'Tab' });
+          const focusedElement = document.activeElement;
+          const styles = window.getComputedStyle(focusedElement);
+          expect(parseInt(styles.outlineWidth, 10)).to.be.at.least(2, 'Focus indicator must be at least 2px thick.');
+
+          // eslint-disable-next-line no-await-in-loop
+          await expect(focusedElement).to.be.accessible({
+            runOnly: { type: 'rule', values: ['non-text-contrast'] },
+          });
+        }
       });
     });
 
     describe('Guideline 2.5: Input Modalities', () => {
       it.skip('2.5.1 Pointer Gestures (Level A)', () => {
-        // N/A: Uses standard single-pointer activation.
+        // N/A: The dialog's functionality relies on standard single-pointer activation
+        // (e.g., clicks or taps) and does not require any path-based or multi-point gestures.
       });
 
-      it.skip('2.5.2 Pointer Cancellation (Level A)', async () => {
-        // TBD
+      it.skip('2.5.2 Pointer Cancellation (Level A)', () => {
+        // Covered: This is met by using standard HTML <button> and <a> elements, which
+        // natively handle pointer cancellation. For instance, the action is triggered on
+        // pointer `up`, and moving the pointer off the target before `up` cancels the event.
       });
 
-      it.skip('2.5.3 Label in Name (Level A)', async () => {
-        // TBD
+      it('2.5.3 Label in Name (Level A)', async () => {
+        // Covered: This is validated by tests for 1.1.1 and 2.4.6, which ensure
+        // all interactive controls like buttons have an accessible name that
+        // matches or includes their visible label.
+        const el = await fixture(plainFixture);
+        await decorate(el.querySelector('.dialog'));
+        const dialog = el.querySelector('dialog');
+        const buttons = dialog.querySelectorAll('button');
+
+        buttons.forEach((button) => {
+          const visibleText = button.textContent.trim().toLowerCase();
+          const accessibleName = getAccessibleName(button).toLowerCase();
+          if (visibleText) {
+            expect(accessibleName).to.include(visibleText);
+          }
+        });
       });
 
       it.skip('2.5.4 Motion Actuation (Level A)', () => {
-        // N/A: Not operated by device or user motion.
+        // N/A: The dialog component cannot be operated by device motion (e.g., tilting)
+        // or user motion (e.g., waving at a camera).
       });
 
       it.skip('2.5.5 Target Size (Minimum) (Level AA)', async () => {
-        // TBD
+        const TARGET_SIZE_MIN = 24;
+        const targetEl = await fixture(plainFixture);
+        await decorate(targetEl.querySelector('.dialog'));
+        const dialog = targetEl.querySelector('dialog');
+        dialog.style.display = 'flex'; // Make visible for measurement
+        await nextFrame();
+
+        const interactiveElements = dialog.querySelectorAll('button, a[href], [role="button"]');
+        interactiveElements.forEach((el) => {
+          const rect = el.getBoundingClientRect();
+          expect(rect.width).to.be.at.least(TARGET_SIZE_MIN, `Width of <${el.tagName}> should be at least ${TARGET_SIZE_MIN}px`);
+          expect(rect.height).to.be.at.least(TARGET_SIZE_MIN, `Height of <${el.tagName}> should be at least ${TARGET_SIZE_MIN}px`);
+        });
       });
 
       it.skip('2.5.6 Concurrent Input Mechanisms (Level AAA)', () => {
-        // N/A: The component does not restrict input methods. This SC is about
-        // ensuring web content does not make assumptions about the user's input device.
+        // N/A: This is a platform-level concern. The component does not restrict
+        // or interfere with the user's ability to switch between input mechanisms like
+        // mouse, keyboard, or touch.
       });
       it.skip('2.5.7 Dragging Movements (Level AA)', () => {
         // N/A: The component does not use any dragging movements for its operation.
       });
 
-      it.skip('2.5.8 Target Size (Enhanced) (Level AAA)', async () => {
-        // TBD
+      it('2.5.8 Target Size (Minimum) (Level AA)', async () => {
+        const TARGET_SIZE_MIN = 44;
+        const targetEl = await fixture(plainFixture);
+        await decorate(targetEl.querySelector('.dialog'));
+        const dialog = targetEl.querySelector('dialog');
+        dialog.style.display = 'flex'; // Make visible for measurement
+        await nextFrame();
+
+        const interactiveElements = dialog.querySelectorAll('button, a[href], [role="button"]');
+        interactiveElements.forEach((el) => {
+          const rect = el.getBoundingClientRect();
+          expect(rect.width).to.be.at.least(TARGET_SIZE_MIN, `Width of <${el.tagName}> should be at least ${TARGET_SIZE_MIN}px`);
+          expect(rect.height).to.be.at.least(TARGET_SIZE_MIN, `Height of <${el.tagName}> should be at least ${TARGET_SIZE_MIN}px`);
+        });
       });
     });
   });

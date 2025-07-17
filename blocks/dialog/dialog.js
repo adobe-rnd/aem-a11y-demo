@@ -39,6 +39,17 @@ function decorateButtons(footer, dialog) {
 }
 
 function initDialogTriggers() {
+  const dialogs = document.querySelectorAll('.dialog');
+  dialogs.forEach((dialog) => {
+    const id = dialog.querySelector('dialog')?.id;
+    const triggers = document.querySelectorAll(`a[href="#${id}"]`);
+
+    triggers.forEach((trigger) => {
+      trigger.setAttribute('role', 'button');
+      trigger.setAttribute('tabindex', '0');
+    });
+  });
+
   if (dialogsInitialized) return;
   dialogsInitialized = true;
 
@@ -149,7 +160,7 @@ export default async function decorate(block) {
   content.className = 'dialog-content';
   content.append(...contentRow.children);
   content.id = getRandomId('dialog-content');
-  content.tabIndex = 0;
+  // content.tabIndex = 0;
   dialog.setAttribute('aria-describedby', content.id);
   container.append(content);
   contentRow.remove();

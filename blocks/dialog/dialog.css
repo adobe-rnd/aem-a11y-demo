@@ -30,6 +30,7 @@
     --dialog-button-primary-text-color: #000;
     --dialog-button-secondary-border-color: #fff;
     --dialog-button-secondary-text-color: #fff;
+    --dialog-focus-outline-color: #3b8aff;
     --dialog-info-color: #3b8aff;
     --dialog-success-color: #2f9e64;
     --dialog-warning-color: #ffcd39;
@@ -70,20 +71,31 @@
   animation: dialog-fade-in 0.3s ease-out;
 }
 
-.dialog .button {
-  margin: 0;
-}
-
-dialog::backdrop {
+.dialog dialog::backdrop {
   background-color: var(--dialog-backdrop-color);
   backdrop-filter: blur(2px);
+}
+
+.dialog .button {
+  margin: 0;
+  padding: var(--dialog-spacing-m) var(--dialog-spacing-l);
+  font-weight: 600;
+  border: var(--dialog-border-width) solid transparent;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.dialog dialog,
+.dialog .button:focus-visible {
+  outline: var(--dialog-border-width) solid var(--dialog-focus-outline-color);
+  outline-offset: var(--dialog-border-width);
 }
 
 .dialog-container {
   display: flex;
   flex-direction: column;
+  height: auto;
   max-height: 80vh;
-  height: 100%;
   background-color: var(--dialog-background-color);
   color: var(--dialog-text-color);
 }
@@ -134,14 +146,12 @@ dialog::backdrop {
   color: inherit;
 }
 
-.dialog-close {
+.dialog .dialog-close {
   top: var(--dialog-spacing-l);
   right: var(--dialog-spacing-l);
-  width: calc(var(--dialog-spacing-l) * 1.5);
-  height: calc(var(--dialog-spacing-l) * 1.5);
+  width: 44px;
+  height: 44px;
   padding: 0;
-  border: 0;
-  cursor: pointer;
   font-size: 1.5rem;
   line-height: 1;
 }
@@ -164,6 +174,11 @@ dialog::backdrop {
   color: inherit;
 }
 
+.dialog-content a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 .dialog-footer {
   padding: var(--dialog-spacing-l);
   border-top: 1px solid var(--dialog-border-color);
@@ -181,14 +196,6 @@ dialog::backdrop {
   color: inherit;
 }
 
-.dialog-button {
-  padding: var(--dialog-spacing-m) var(--dialog-spacing-l);
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  border: var(--dialog-border-width) solid transparent;
-}
-
 .dialog .button.primary {
   background-color: var(--dialog-button-primary-background-color);
   color: var(--dialog-button-primary-text-color);
@@ -201,6 +208,11 @@ dialog::backdrop {
 }
 
 .dialog-button:focus {
+  outline: var(--dialog-border-width) solid var(--dialog-focus-outline-color);
+  outline-offset: var(--dialog-border-width);
+}
+
+.dialog-content a:focus {
   outline: var(--dialog-border-width) solid var(--dialog-focus-outline-color);
   outline-offset: var(--dialog-border-width);
 }
@@ -270,6 +282,12 @@ dialog::backdrop {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .dialog dialog[open] {
+    animation: none;
+  }
+}
+
 @media (width > 350px) {
   .dialog dialog {
     max-width: 640px;
@@ -281,7 +299,7 @@ dialog::backdrop {
     justify-content: flex-end;
     gap: var(--dialog-spacing-m);
   }
-} 
+}
 
 /* stylelint-disable declaration-property-value-no-unknown */
 @media (forced-colors: active) {
@@ -295,8 +313,8 @@ dialog::backdrop {
     color: ButtonText !important;
   }
 
-  .dialog-close,
-  .dialog-close:hover {
+  .dialog .dialog-close,
+  .dialog .dialog-close:hover {
     color: ButtonText;
   }
 
@@ -312,7 +330,7 @@ dialog::backdrop {
     forced-color-adjust: preserve-parent-color;
   }
 
-  .dialog-close:focus,
+  .dialog .button.dialog-close:focus,
   .dialog-button:focus {
     outline-color: LinkText;
   }
