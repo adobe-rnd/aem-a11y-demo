@@ -1,4 +1,5 @@
-import { getItemForKeyEvent, yieldToMain, getRandomId } from '../../scripts/a11y-core.js';
+import { getItemForKeyEvent, yieldToMain } from '../../scripts/a11y-core.js';
+import { toClassName } from '../../scripts/aem.js';
 
 function getHeadingLevel(block) {
   const authorHeading = block.querySelector('h1, h2, h3, h4, h5, h6');
@@ -33,11 +34,14 @@ function createAccordionItem(headingDiv, panelDiv, isMultiSelect, headingLevel) 
   }
 
   const elementWithId = headingDiv.querySelector('[id]');
-  const buttonId = elementWithId ? elementWithId.id : getRandomId('accordion-button');
-  if (elementWithId) {
-    elementWithId.id = ''; // Transfer ID to the button
-  }
-  const panelId = `${buttonId}-panel`;
+  // Use author-provided ID as a base, or slugify the heading text
+  const baseId = elementWithId
+    ? elementWithId.id
+    : toClassName(headingDiv.textContent.trim());
+
+  // Create new, unique IDs for the button and panel, leaving the original ID untouched
+  const buttonId = `${baseId}-button`;
+  const panelId = `${baseId}-panel`;
 
   // Check for strong/em tag to set default open state before manipulating the DOM
   const emphasisElement = headingDiv.querySelector('strong, em');

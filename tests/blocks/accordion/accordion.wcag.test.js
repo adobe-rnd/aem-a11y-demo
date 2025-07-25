@@ -54,6 +54,7 @@ describe('Accordion WCAG Compliance', () => {
 
   beforeEach(async () => {
     // Reset media emulation before each test.
+    window.location.hash = '';
     await emulateMedia({
       contrast: 'no-preference',
       reducedMotion: 'no-preference',
@@ -715,6 +716,7 @@ describe('Accordion WCAG Compliance', () => {
         const panel = block.querySelector(`#${button.getAttribute('aria-controls')}`);
 
         // 1. Check initial state
+        console.log(block.outerHTML);
         expect(button.getAttribute('aria-expanded'), 'Button should initially be collapsed.').to.equal('false');
         expect(panel.hidden, 'Panel should initially be hidden.').to.be.true;
 

@@ -1,4 +1,5 @@
-import { getRandomId, yieldToMain } from '../../scripts/a11y-core.js';
+import { yieldToMain } from '../../scripts/a11y-core.js';
+import { toClassName } from '../../scripts/aem.js';
 
 /**
  * Creates a <details> element for a disclosure item.
@@ -13,7 +14,15 @@ function createDisclosureItem(headingDiv, panelDiv) {
 
   const details = document.createElement('details');
   const summary = document.createElement('summary');
-  summary.id = getRandomId('disclosure');
+
+  // Logic for deterministic IDs
+  const elementWithId = headingDiv.querySelector('[id]');
+  const baseId = elementWithId
+    ? elementWithId.id
+    : toClassName(headingDiv.textContent.trim());
+
+  // Create a new, unique ID for the summary, leaving the original ID untouched
+  summary.id = `${baseId}-summary`;
 
   // Check for strong/em tag to set default open state
   const emphasisElement = headingDiv.querySelector('strong, em');
