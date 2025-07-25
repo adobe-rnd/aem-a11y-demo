@@ -1,9 +1,12 @@
 .accordion {
+  /* Define all component-specific properties as CSS variables for easy theming and maintenance. */
+  --accordion-background-color: var(--background-color, #fff);
   --accordion-border-width: 2px;
+  --accordion-header-background-hover: #f0f0f0;
   --accordion-focus-outline-color: var(--link-color, #005A9C);
   --accordion-text-color: var(--text-color, #333);
-  --accordion-background-color: var(--background-color, #fff);
-  --accordion-header-background-hover: #f0f0f0;
+  --accordion-spacing-m: .5em;
+  --accordion-spacing-l: 1em;
 
   max-width: 100%;
   box-sizing: border-box;
@@ -41,10 +44,11 @@
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 0.5em 1em;
   text-align: left;
   color: var(--accordion-text-color);
   background-color: var(--accordion-background-color);
+  padding: var(--accordion-spacing-m) var(--accordion-spacing-l);
+  min-height: 44px;
 }
 
 .accordion-heading button:hover {

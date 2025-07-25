@@ -1,0 +1,188 @@
+/**
+ * Accessible Grid System - Part 1: Core Layout Helpers
+ *
+ * A mobile-first, progressive 12-column CSS Grid system designed for accessibility-first layouts.
+ * This system provides layout utilities while maintaining source order independence.
+ *
+ * Breakpoint Strategy:
+ * - Mobile (default): 1 column
+ * - Tablet (768px+): 6 columns
+ * - Desktop (1024px+): 12 columns
+ *
+ * Based on GRID_SYSTEM_PLAN.md
+ */
+
+/* ==========================================
+   GRID CONTAINER
+   ========================================== */
+
+/**
+ * Base grid container - Mobile First
+ * Default: single column for WCAG 1.4.10 (Reflow) compliance
+ */
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+/**
+ * Safe selector for AEM sections
+ * Targets Franklin's block wrapper div without side effects
+ */
+.section.grid > div {
+  display: contents;
+}
+
+/* ==========================================
+   RESPONSIVE BREAKPOINTS - MOBILE FIRST
+   ========================================== */
+
+/**
+ * Tablet: 6-column grid at 768px and above
+ * Provides middle ground between mobile and desktop
+ */
+@media (width >= 768px) {
+  .grid {
+    gap: 1.25rem;
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/**
+ * Desktop: 12-column grid at 1024px and above
+ * Full desktop layout capabilities
+ */
+@media (width >= 1024px) {
+  .grid {
+    gap: 1.5rem;
+    grid-template-columns: repeat(12, 1fr);
+  }
+}
+
+/* ==========================================
+   COLUMN SPANNING CLASSES - RESPONSIVE
+   ========================================== */
+
+/**
+ * Mobile: All columns are full-width by default
+ * Tablet & Desktop: Column spans apply progressively
+ */
+
+/* Base: All columns full-width on mobile */
+[class*="col-"] {
+  grid-column: 1 / -1;
+}
+
+/* Tablet (768px+): 6-column system */
+@media (width >= 768px) {
+  .col-1 { grid-column: span 1; }
+  .col-2 { grid-column: span 2; }
+  .col-3 { grid-column: span 3; }
+  .col-4 { grid-column: span 4; }
+  .col-5 { grid-column: span 5; }
+  .col-6 { grid-column: span 6; }
+
+  /* Columns 7-12 span full width on tablet (6 columns max) */
+  .col-7, .col-8, .col-9, .col-10, .col-11, .col-12 {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Desktop (1024px+): 12-column system */
+@media (width >= 1024px) {
+  .col-1 { grid-column: span 1; }
+  .col-2 { grid-column: span 2; }
+  .col-3 { grid-column: span 3; }
+  .col-4 { grid-column: span 4; }
+  .col-5 { grid-column: span 5; }
+  .col-6 { grid-column: span 6; }
+  .col-7 { grid-column: span 7; }
+  .col-8 { grid-column: span 8; }
+  .col-9 { grid-column: span 9; }
+  .col-10 { grid-column: span 10; }
+  .col-11 { grid-column: span 11; }
+  .col-12 { grid-column: span 12; }
+}
+
+/* ==========================================
+   OFFSET CLASSES - RESPONSIVE
+   ========================================== */
+
+/**
+ * Offset utilities - Applied progressively
+ *
+ * ACCESSIBILITY WARNING:
+ * These classes should ONLY be used for:
+ * 1. Indenting the FIRST element in a row
+ * 2. Positioning a SINGLE element that is the sole occupant of its row
+ *
+ * NEVER use offsets to visually reorder sibling elements as this
+ * breaks the logical tab order and violates WCAG success criteria.
+ */
+
+/* Mobile: No offsets (prevents narrow content) */
+[class*="off-"] {
+  grid-column-start: auto;
+}
+
+/* Tablet (768px+): 6-column offsets */
+@media (width >= 768px) {
+  .off-1 { grid-column-start: 2; }
+  .off-2 { grid-column-start: 3; }
+  .off-3 { grid-column-start: 4; }
+  .off-4 { grid-column-start: 5; }
+  .off-5 { grid-column-start: 6; }
+
+  /* Offsets 6+ disabled on tablet (would push content off screen) */
+  .off-6, .off-7, .off-8, .off-9, .off-10, .off-11 {
+    grid-column-start: auto;
+  }
+}
+
+/* Desktop (1024px+): 12-column offsets */
+@media (width >= 1024px) {
+  .off-1 { grid-column-start: 2; }
+  .off-2 { grid-column-start: 3; }
+  .off-3 { grid-column-start: 4; }
+  .off-4 { grid-column-start: 5; }
+  .off-5 { grid-column-start: 6; }
+  .off-6 { grid-column-start: 7; }
+  .off-7 { grid-column-start: 8; }
+  .off-8 { grid-column-start: 9; }
+  .off-9 { grid-column-start: 10; }
+  .off-10 { grid-column-start: 11; }
+  .off-11 { grid-column-start: 12; }
+}
+
+/* ==========================================
+   ALIGNMENT UTILITIES
+   ========================================== */
+
+/**
+ * Content alignment within grid areas
+ * Available at all breakpoints
+ */
+.justify-start { justify-self: start; }
+.justify-center { justify-self: center; }
+.justify-end { justify-self: end; }
+
+.align-start { align-self: start; }
+.align-center { align-self: center; }
+.align-end { align-self: end; }
+
+/* ==========================================
+   USER PREFERENCE ADAPTATIONS
+   ========================================== */
+
+/**
+ * Reduced motion preferences
+ * Disables any transitions that might be added by components
+ */
+@media (prefers-reduced-motion: reduce) {
+  .grid,
+  .grid > * {
+    transition: none;
+    animation: none;
+  }
+}
