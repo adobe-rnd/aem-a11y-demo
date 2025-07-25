@@ -20,6 +20,7 @@ describe('Tabs Block', () => {
     let block;
 
     beforeEach(async () => {
+      window.location.hash = '';
       const element = await fixture(html`
         <div>
           <div class="tabs">
@@ -88,23 +89,25 @@ describe('Tabs Block', () => {
     describe('Keyboard Navigation', () => {
       it('navigates between tabs with ArrowRight and ArrowLeft and remains accessible', async () => {
         const [firstTab, secondTab] = block.querySelectorAll('[role="tab"]');
-        expect(firstTab.getAttribute('aria-selected')).to.equal('true');
-
-        // Navigate right
-        firstTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-        expect(secondTab.getAttribute('aria-selected')).to.equal('true');
-        expect(document.activeElement).to.equal(secondTab);
-        await expect(block).to.be.accessible();
-
-        // Navigate right again (wraps around)
-        secondTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        firstTab.focus();
         expect(firstTab.getAttribute('aria-selected')).to.equal('true');
         expect(document.activeElement).to.equal(firstTab);
 
-        // Navigate left
-        firstTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+        // Navigate right
+        await sendKeys({ press: 'ArrowRight' });
+        await waitUntil(() => document.activeElement === secondTab);
         expect(secondTab.getAttribute('aria-selected')).to.equal('true');
-        expect(document.activeElement).to.equal(secondTab);
+        await expect(block).to.be.accessible();
+
+        // Navigate right again (wraps around)
+        await sendKeys({ press: 'ArrowRight' });
+        await waitUntil(() => document.activeElement === firstTab);
+        expect(firstTab.getAttribute('aria-selected')).to.equal('true');
+
+        // Navigate left
+        await sendKeys({ press: 'ArrowLeft' });
+        await waitUntil(() => document.activeElement === secondTab);
+        expect(secondTab.getAttribute('aria-selected')).to.equal('true');
       });
 
       it('navigates to first and last tabs with Home and End keys and remains accessible', async () => {
@@ -314,6 +317,33 @@ describe('Tabs Block', () => {
 
       // Clean up hash for subsequent tests
       window.location.hash = '';
+    });
+
+    it('should update the URL hash when a tab is clicked', async () => {
+      const element = await fixture(html`
+        <div>
+          <div class="tabs">
+            <div>
+              <ul>
+                <li><a href="#panel1">Tab 1</a></li>
+                <li><a href="#panel2">Tab 2</a></li>
+              </ul>
+            </div>
+          </div>
+          <div id="panel1">Panel 1</div>
+          <div id="panel2">Panel 2</div>
+        </div>
+      `);
+      const block = element.querySelector('.tabs');
+      await decorate(block);
+
+      const secondTab = element.querySelectorAll('[role="tab"]')[1];
+      secondTab.click();
+
+      await waitUntil(() => window.location.hash === '#panel2');
+      expect(window.location.hash).to.equal('#panel2');
+
+      window.location.hash = ''; // cleanup
     });
   });
 

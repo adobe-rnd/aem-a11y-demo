@@ -1,4 +1,25 @@
-import { getItemForKeyEvent, yieldToMain } from '../../scripts/a11y-core.js';
+import { getItemForKeyEvent, yieldToMain, getRandomId } from '../../scripts/a11y-core.js';
+
+function getHeadingLevel(block) {
+  const authorHeading = block.querySelector('h1, h2, h3, h4, h5, h6');
+  if (authorHeading) {
+    return parseInt(authorHeading.tagName.substring(1), 10);
+  }
+
+  const section = block.closest('.section');
+  if (section) {
+    const headings = section.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    if (headings.length > 0) {
+      const lastHeading = headings[headings.length - 1];
+      const level = parseInt(lastHeading.tagName.substring(1), 10);
+      if (level < 6) {
+        return level + 1;
+      }
+    }
+  }
+
+  return 3; // Default to h3 if no other headings are found
+}
 
 /**
  * Creates a <details> element for an accordion item.
@@ -6,44 +27,98 @@ import { getItemForKeyEvent, yieldToMain } from '../../scripts/a11y-core.js';
  * @param {Element} panelDiv - The div containing the panel content.
  * @returns {Element} The created <details> element.
  */
-function createAccordionItem(headingDiv, panelDiv) {
+function createAccordionItem(headingDiv, panelDiv, isMultiSelect, headingLevel) {
   if (!headingDiv || !panelDiv) {
     return null;
   }
 
-  const details = document.createElement('details');
-  const summary = document.createElement('summary');
+  const elementWithId = headingDiv.querySelector('[id]');
+  const buttonId = elementWithId ? elementWithId.id : getRandomId('accordion-button');
+  if (elementWithId) {
+    elementWithId.id = ''; // Transfer ID to the button
+  }
+  const panelId = `${buttonId}-panel`;
 
-  // Check for strong/em tag to set default open state
+  // Check for strong/em tag to set default open state before manipulating the DOM
   const emphasisElement = headingDiv.querySelector('strong, em');
+  const isOpenByDefault = !!emphasisElement;
+
   if (emphasisElement) {
-    details.open = true;
     // "Unwrap" the content of the emphasis tag
     emphasisElement.replaceWith(...emphasisElement.childNodes);
   }
 
-  summary.append(...headingDiv.childNodes);
-  details.append(summary);
+  const button = document.createElement('button');
+  button.id = buttonId;
+  button.setAttribute('aria-controls', panelId);
+  button.setAttribute('aria-expanded', isOpenByDefault);
+
+  const authorHeading = headingDiv.querySelector('h1, h2, h3, h4, h5, h6');
+  if (authorHeading) {
+    button.append(...authorHeading.childNodes);
+  } else {
+    button.append(...headingDiv.childNodes);
+  }
+
+  const heading = document.createElement(`h${headingLevel}`);
+  heading.classList.add('accordion-heading');
+  heading.appendChild(button);
+
+  const panel = document.createElement('div');
+  panel.id = panelId;
+  panel.classList.add('accordion-panel');
+  panel.setAttribute('role', 'region');
+  panel.setAttribute('aria-labelledby', button.id);
+  panel.hidden = !isOpenByDefault;
 
   const panelContent = document.createElement('div');
   panelContent.classList.add('accordion-panel-content');
   panelContent.append(...panelDiv.childNodes);
-  details.append(panelContent);
+  panel.appendChild(panelContent);
 
-  return details;
+  const item = document.createElement('div');
+  item.classList.add('accordion-item');
+  item.append(heading, panel);
+
+  button.addEventListener('click', () => {
+    const isExpanded = button.getAttribute('aria-expanded') === 'true';
+    if (!isMultiSelect) {
+      const allButtons = button.closest('.accordion').querySelectorAll('button[aria-expanded="true"]');
+      allButtons.forEach((b) => {
+        if (b !== button) {
+          b.setAttribute('aria-expanded', 'false');
+          const controlledPanel = document.getElementById(b.getAttribute('aria-controls'));
+          if (controlledPanel) controlledPanel.hidden = true;
+        }
+      });
+    }
+    const newExpandedState = !isExpanded;
+    button.setAttribute('aria-expanded', newExpandedState);
+    panel.hidden = !newExpandedState;
+
+    if (newExpandedState) {
+      // eslint-disable-next-line no-restricted-globals
+      history.pushState(null, '', `#${button.id}`);
+    } else if (window.location.hash === `#${button.id}`) {
+      // eslint-disable-next-line no-restricted-globals
+      history.pushState(null, '', window.location.pathname + window.location.search);
+    }
+  });
+
+  return item;
 }
-
 /* eslint-disable no-await-in-loop, no-restricted-syntax */
 export default async function decorate(block) {
   const isMultiSelect = block.classList.contains('multi-select');
-  // Auto-detect layout by checking the number of columns in the first row
   const isTwoColumnLayout = block.querySelector(':scope > div')?.children.length === 2;
+  const headingLevel = getHeadingLevel(block);
   const YIELD_BUDGET_MS = 50;
 
-  // Pre-calculate height to prevent CLS
-  const itemHeight = block.querySelector(':scope > div')?.offsetHeight || 48; // Estimate 48px if not available
+  const itemHeight = block.querySelector(':scope > div')?.offsetHeight || 48;
   const itemCount = block.querySelectorAll(':scope > div').length / (isTwoColumnLayout ? 1 : 2);
   block.style.minHeight = `${itemCount * itemHeight}px`;
+
+  const newContent = document.createDocumentFragment();
 
   if (isTwoColumnLayout) {
     const rows = [...block.querySelectorAll(':scope > div')];
@@ -51,31 +126,21 @@ export default async function decorate(block) {
     for (const row of rows) {
       const headingDiv = row.children[0];
       const panelDiv = row.children[1];
-      const details = createAccordionItem(headingDiv, panelDiv);
-      if (details) {
-        row.replaceWith(details);
-      }
+      const item = createAccordionItem(headingDiv, panelDiv, isMultiSelect, headingLevel);
+      if (item) newContent.appendChild(item);
       if (performance.now() > deadline) {
         await yieldToMain();
         deadline = performance.now() + YIELD_BUDGET_MS;
       }
     }
   } else {
-    // Default stacked layout
     const items = [...block.querySelectorAll(':scope > div')];
     let deadline = performance.now() + YIELD_BUDGET_MS;
     for (let i = 0; i < items.length; i += 2) {
-      const headingRow = items[i];
-      const panelRow = items[i + 1];
-      // In stacked layout, the content is in the first child of the row
-      const headingDiv = headingRow.firstElementChild;
-      const panelDiv = panelRow.firstElementChild;
-
-      const details = createAccordionItem(headingDiv, panelDiv);
-      if (details) {
-        headingRow.replaceWith(details);
-        panelRow.remove();
-      }
+      const headingDiv = items[i].firstElementChild;
+      const panelDiv = items[i + 1].firstElementChild;
+      const item = createAccordionItem(headingDiv, panelDiv, isMultiSelect, headingLevel);
+      if (item) newContent.appendChild(item);
       if (performance.now() > deadline) {
         await yieldToMain();
         deadline = performance.now() + YIELD_BUDGET_MS;
@@ -83,76 +148,42 @@ export default async function decorate(block) {
     }
   }
 
-  // Clear the min-height after decoration is complete
+  block.innerHTML = '';
+  block.append(newContent);
   block.style.minHeight = '';
 
-  const summaries = block.querySelectorAll('summary');
+  const buttons = block.querySelectorAll('.accordion-heading button');
 
-  // Initialize tabindex for roving focus
-  summaries.forEach((summary, i) => {
-    summary.setAttribute('tabindex', i === 0 ? '0' : '-1');
-  });
-
-  const handleSingleSelection = (clickedSummary) => {
-    const details = clickedSummary.closest('details');
-    // Toggle the clicked details element
-    details.open = !details.open;
-
-    // Close all other details elements
-    summaries.forEach((summary) => {
-      const otherDetails = summary.closest('details');
-      if (otherDetails !== details) {
-        otherDetails.open = false;
-      }
-    });
-  };
-
-  summaries.forEach((summary) => {
-    summary.addEventListener('click', (e) => {
-      // For multi-select, allow the native browser behavior
-      if (isMultiSelect) return;
-      // For single-select, prevent default and manage state manually
-      e.preventDefault();
-      handleSingleSelection(e.currentTarget);
-    });
+  buttons.forEach((button, i) => {
+    button.setAttribute('tabindex', i === 0 ? '0' : '-1');
   });
 
   block.addEventListener('keydown', (e) => {
     const { key, target } = e;
 
-    // Only handle events on the summaries within this block
-    if (target.tagName !== 'SUMMARY' || !block.contains(target)) {
+    if (target.tagName !== 'BUTTON' || !block.contains(target)) {
       return;
     }
 
     if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(key)) {
       e.preventDefault();
-      const items = Array.from(summaries);
+      const items = Array.from(buttons);
       getItemForKeyEvent(e, items, 'vertical');
     }
 
     if (key === 'Enter' || key === 'Space') {
       e.preventDefault();
-      if (isMultiSelect) {
-        // In multi-select, just toggle the current item
-        target.closest('details').open = !target.closest('details').open;
-      } else {
-        // In single-select, use the dedicated handler
-        handleSingleSelection(target);
-      }
+      target.click();
     }
   });
 
-  // Deep linking
   const { hash } = window.location;
   if (hash) {
     const hashId = hash.substring(1);
-    const targetHeading = document.getElementById(hashId);
-    if (targetHeading) {
-      const targetDetails = targetHeading.closest('details');
-      if (targetDetails) {
-        targetDetails.open = true;
-      }
+    const targetButton = document.getElementById(hashId);
+    if (targetButton && targetButton.closest('.accordion') === block) {
+      targetButton.click();
+      targetButton.scrollIntoView();
     }
   }
 }

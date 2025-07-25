@@ -1,99 +1,114 @@
 .accordion {
-  /* Define all component-specific properties as CSS variables for easy theming and maintenance. */
-  --accordion-background-color: var(--background-color, #fff);
   --accordion-border-width: 2px;
-  --accordion-header-background-hover: #f0f0f0;
   --accordion-focus-outline-color: var(--link-color, #005A9C);
   --accordion-text-color: var(--text-color, #333);
-  --accordion-spacing-m: .5em;
-  --accordion-spacing-l: 1em;
+  --accordion-background-color: var(--background-color, #fff);
+  --accordion-header-background-hover: #f0f0f0;
 
   max-width: 100%;
   box-sizing: border-box;
   margin: 1rem 0;
-  background-color: var(--accordion-background-color);
-  color: var(--accordion-text-color);
 }
 
 /* Dark Mode styles */
 @media (prefers-color-scheme: dark) {
   .accordion {
-    --accordion-background-color: var(--background-color, #121212);
-    --accordion-header-background-hover: var(--light-color, #1e1e1e);
     --accordion-focus-outline-color: var(--link-color, #9cdcfe);
     --accordion-text-color: var(--text-color, #d0d0d0);
+    --accordion-background-color: var(--background-color, #121212);
+    --accordion-header-background-hover: var(--light-color, #1e1e1e);
   }
 }
 
-.accordion details {
-  background-color: var(--accordion-background-color);
+.accordion-item {
+  border-top: 1px solid var(--text-color);
 }
 
-.accordion summary {
+.accordion-item:last-of-type {
+  border-bottom: 1px solid var(--text-color);
+}
+
+.accordion-heading {
+  font-size: inherit;
+  margin: 0;
+  font-weight: normal;
+}
+
+.accordion-heading button {
+  all: unset;
   cursor: pointer;
-  display: list-item; /* Use default marker */
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.5em 1em;
+  text-align: left;
+  color: var(--accordion-text-color);
   background-color: var(--accordion-background-color);
-  padding: var(--accordion-spacing-m) var(--accordion-spacing-l);
-  min-height: calc(44px - 2*var(--accordion-spacing-m));
 }
 
-.accordion summary:hover {
+.accordion-heading button:hover {
   background-color: var(--accordion-header-background-hover);
 }
 
-.accordion summary:focus-visible {
+.accordion-heading button:focus-visible {
   outline: var(--accordion-border-width) solid var(--accordion-focus-outline-color);
-  outline-offset: var(--accordion-border-width);
+  outline-offset: -2px;
   z-index: 1;
   position: relative;
 }
 
-.accordion summary :is(h2, h3, h4, h5, h6) {
-  display: inline-block;
-  margin: 0;
+.accordion-heading button::after {
+  content: '';
+  width: 0.5em;
+  height: 0.5em;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  transform: rotate(45deg);
+  margin-left: auto;
+  transition: transform 0.2s;
 }
 
-.accordion .accordion-panel-content {
-  padding: var(--accordion-spacing-l);
+.accordion-heading button[aria-expanded="true"]::after {
+  transform: rotate(225deg);
 }
 
-/* Respect user's preference for reduced motion */
+.accordion-panel {
+  padding: 1em;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .accordion summary::after {
+  .accordion-heading button::after {
     transition: none;
   }
 }
 
 /* Adapt styles for Windows High Contrast Mode */
 @media (forced-colors: active) {
-  .accordion summary {
+  .accordion-heading button {
     border-color: ButtonBorder;
     background-color: ButtonFace;
     color: ButtonText;
+    forced-color-adjust: preserve-parent-color;
   }
 
-  .accordion summary:focus-visible {
+  .accordion-heading button:focus-visible {
     outline-color: Highlight;
   }
 
-  .accordion summary * {
-    forced-color-adjust: preserve-parent-color;
-  }
-
-  .accordion summary::marker {
-    forced-color-adjust: preserve-parent-color;
-  }
-
-  .accordion summary:hover,
-  .accordion summary:focus-visible,
-  .accordion details[open] > summary {
+  .accordion-heading button:hover {
     background-color: Highlight;
     color: HighlightText;
   }
 
-  .accordion .accordion-panel-content {
+  .accordion-heading button[aria-expanded="true"] {
+    background-color: SelectedItem;
+    color: SelectedItemText;
+  }
+
+  .accordion-panel {
     border-color: ButtonBorder;
     background-color: Canvas;
     color: CanvasText;
   }
-} 
+}

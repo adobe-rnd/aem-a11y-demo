@@ -1,0 +1,99 @@
+.disclosure {
+  /* Define all component-specific properties as CSS variables for easy theming and maintenance. */
+  --disclosure-background-color: var(--background-color, #fff);
+  --disclosure-border-width: 2px;
+  --disclosure-header-background-hover: #f0f0f0;
+  --disclosure-focus-outline-color: var(--link-color, #005A9C);
+  --disclosure-text-color: var(--text-color, #333);
+  --disclosure-spacing-m: .5em;
+  --disclosure-spacing-l: 1em;
+
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 1rem 0;
+  background-color: var(--disclosure-background-color);
+  color: var(--disclosure-text-color);
+}
+
+/* Dark Mode styles */
+@media (prefers-color-scheme: dark) {
+  .disclosure {
+    --disclosure-background-color: var(--background-color, #121212);
+    --disclosure-header-background-hover: var(--light-color, #1e1e1e);
+    --disclosure-focus-outline-color: var(--link-color, #9cdcfe);
+    --disclosure-text-color: var(--text-color, #d0d0d0);
+  }
+}
+
+.disclosure details {
+  background-color: var(--disclosure-background-color);
+}
+
+.disclosure summary {
+  cursor: pointer;
+  display: list-item; /* Use default marker */
+  background-color: var(--disclosure-background-color);
+  padding: var(--disclosure-spacing-m) var(--disclosure-spacing-l);
+  min-height: calc(44px - 2*var(--disclosure-spacing-m));
+}
+
+.disclosure summary:hover {
+  background-color: var(--disclosure-header-background-hover);
+}
+
+.disclosure summary:focus-visible {
+  outline: var(--disclosure-border-width) solid var(--disclosure-focus-outline-color);
+  outline-offset: var(--disclosure-border-width);
+  z-index: 1;
+  position: relative;
+}
+
+.disclosure summary :is(h2, h3, h4, h5, h6) {
+  display: inline-block;
+  margin: 0;
+}
+
+.disclosure .disclosure-panel-content {
+  padding: var(--disclosure-spacing-l);
+}
+
+/* Respect user's preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .disclosure summary::after {
+    transition: none;
+  }
+}
+
+/* Adapt styles for Windows High Contrast Mode */
+@media (forced-colors: active) {
+  .disclosure summary {
+    border-color: ButtonBorder;
+    background-color: ButtonFace;
+    color: ButtonText;
+  }
+
+  .disclosure summary:focus-visible {
+    outline-color: Highlight;
+  }
+
+  .disclosure summary * {
+    forced-color-adjust: preserve-parent-color;
+  }
+
+  .disclosure summary::marker {
+    forced-color-adjust: preserve-parent-color;
+  }
+
+  .disclosure summary:hover,
+  .disclosure summary:focus-visible,
+  .disclosure details[open] > summary {
+    background-color: Highlight;
+    color: HighlightText;
+  }
+
+  .disclosure .disclosure-panel-content {
+    border-color: ButtonBorder;
+    background-color: Canvas;
+    color: CanvasText;
+  }
+}

@@ -28,6 +28,7 @@ describe('WCAG 2.2 Conformance for Tabs Component', () => {
   });
 
   beforeEach(async () => {
+    window.location.hash = '';
     await emulateMedia({
       contrast: 'no-preference',
       reducedMotion: 'no-preference',

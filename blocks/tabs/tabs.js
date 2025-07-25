@@ -67,6 +67,10 @@ async function switchTab(newTab, setFocus = true) {
   if (setFocus) {
     newTab.focus();
   }
+
+  const newPanelId = newTab.getAttribute('aria-controls').replace('-container', '');
+  // eslint-disable-next-line no-restricted-globals
+  history.pushState(null, '', `#${newPanelId}`);
 }
 
 /**
