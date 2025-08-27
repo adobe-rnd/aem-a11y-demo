@@ -25,7 +25,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@anthropic-ai/claude-code": "1.0.92",
+    "@anthropic-ai/claude-code": "1.0.93",
     "@axe-core/playwright": "^4.9.1",
     "@babel/eslint-parser": "7.28.0",
     "@esm-bundle/chai": "^4.3.4-fix.0",
