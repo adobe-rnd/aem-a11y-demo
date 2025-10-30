@@ -32,7 +32,7 @@
     "@lhci/cli": "^0.15.1",
     "@open-wc/testing": "^4.0.0",
     "@playwright/test": "^1.54.1",
-    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-commonjs": "^29.0.0",
     "@web/dev-server-esbuild": "^1.0.4",
     "@web/dev-server-rollup": "^0.6.4",
     "@web/test-runner": "^0.20.0",
