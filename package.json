@@ -40,7 +40,7 @@
     "@web/test-runner-playwright": "^0.11.1",
     "@web/test-runner-visual-regression": "^0.10.0",
     "axe-cli": "^3.2.1",
-    "axe-core": "4.11.0",
+    "axe-core": "4.11.1",
     "chai": "^6.0.0",
     "chai-a11y-axe": "^1.5.0",
     "eslint": "^8.57.1",
