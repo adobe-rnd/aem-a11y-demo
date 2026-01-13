@@ -27,7 +27,7 @@
   "devDependencies": {
     "@anthropic-ai/claude-code": "2.1.6",
     "@axe-core/playwright": "^4.9.1",
-    "@babel/eslint-parser": "7.28.5",
+    "@babel/eslint-parser": "7.28.6",
     "@esm-bundle/chai": "^4.3.4-fix.0",
     "@lhci/cli": "^0.15.1",
     "@open-wc/testing": "^4.0.0",
