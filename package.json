@@ -29,7 +29,7 @@
     "@axe-core/playwright": "^4.9.1",
     "@babel/eslint-parser": "7.29.13",
     "@esm-bundle/chai": "^4.3.4-fix.0",
-    "@lhci/cli": "^0.15.1",
+    "@lhci/cli": "^0.16.0",
     "@open-wc/testing": "^4.0.0",
     "@playwright/test": "^1.54.1",
     "@rollup/plugin-commonjs": "^29.0.0",
